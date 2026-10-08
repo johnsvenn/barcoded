@@ -1,146 +1,162 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
-import type { Barcode, Category } from '../db';
-import { getValidationError } from '../utils/validation';
-import Dialog from 'primevue/dialog';
-import Select from 'primevue/select';
-import InputText from 'primevue/inputtext';
-import Button from 'primevue/button';
+import { ref, computed, watch } from 'vue'
+import type { Barcode, Category } from '../db'
+import { getValidationError } from '../utils/validation'
+import { CheckIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 
 const props = defineProps<{
-  visible: boolean;
-  editingBarcode: Barcode | null;
-  types: Array<{ label: string; value: string; bcid: string }>;
-  categories: Category[];
-  initialCategoryId: string;
-}>();
+    visible: boolean
+    editingBarcode: Barcode | null
+    types: Array<{ label: string; value: string; bcid: string }>
+    categories: Category[]
+    initialCategoryId: string
+}>()
 
 const emit = defineEmits<{
-  (e: 'update:visible', value: boolean): void;
-  (e: 'save', data: { type: string; value: string; categoryId: string }): void;
-}>();
+    (e: 'update:visible', value: boolean): void
+    (e: 'save', data: { type: string; value: string; categoryId: string }): void
+}>()
 
-const barcodeType = ref('qrcode');
-const barcodeCategory = ref('');
-const barcodeValue = ref('');
+const barcodeType = ref('qrcode')
+const barcodeCategory = ref('')
+const barcodeValue = ref('')
 
 watch(
-  () => props.visible,
-  (isVis) => {
-    if (isVis) {
-      if (props.editingBarcode) {
-        barcodeType.value = props.editingBarcode.type;
-        barcodeCategory.value = props.editingBarcode.categoryId;
-        barcodeValue.value = props.editingBarcode.value;
-      } else {
-        barcodeType.value = 'qrcode';
-        barcodeCategory.value = props.initialCategoryId || (props.categories[0]?.id ?? '');
-        barcodeValue.value = '';
-      }
-    }
-  },
-  { immediate: true }
-);
+    () => props.visible,
+    (isVis) => {
+        if (isVis) {
+            if (props.editingBarcode) {
+                barcodeType.value = props.editingBarcode.type
+                barcodeCategory.value = props.editingBarcode.categoryId
+                barcodeValue.value = props.editingBarcode.value
+            } else {
+                barcodeType.value = 'qrcode'
+                barcodeCategory.value = props.initialCategoryId || (props.categories[0]?.id ?? '')
+                barcodeValue.value = ''
+            }
+        }
+    },
+    { immediate: true },
+)
 
-const validationError = computed(() =>
-  getValidationError(barcodeType.value, barcodeValue.value)
-);
+const validationError = computed(() => getValidationError(barcodeType.value, barcodeValue.value))
 
-const isValid = computed(() => !!barcodeValue.value && !validationError.value);
+const isValid = computed(() => !!barcodeValue.value && !validationError.value)
 
 const handleSave = () => {
-  if (!isValid.value) return;
-  emit('save', {
-    type: barcodeType.value,
-    value: barcodeValue.value,
-    categoryId: barcodeCategory.value,
-  });
-};
+    if (!isValid.value) return
+    emit('save', {
+        type: barcodeType.value,
+        value: barcodeValue.value,
+        categoryId: barcodeCategory.value,
+    })
+}
+
+const close = () => {
+    emit('update:visible', false)
+}
 </script>
 
 <template>
-  <Dialog
-    :visible="visible"
-    @update:visible="emit('update:visible', $event)"
-    :header="editingBarcode ? 'Edit Barcode' : 'Create Barcode'"
-    modal
-    :style="{ width: '450px' }"
-  >
-    <div class="form-grid">
-      <div class="field">
-        <label for="modal-type">Type</label>
-        <Select
-          id="modal-type"
-          v-model="barcodeType"
-          :options="types"
-          optionLabel="label"
-          optionValue="value"
-          class="w-full"
-        />
-      </div>
+    <Teleport to="body">
+        <div
+            v-if="visible"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs"
+            @click.self="close"
+            @keydown.esc="close"
+        >
+            <div
+                class="bg-white rounded-lg shadow-xl border border-slate-300 w-full max-w-md overflow-hidden flex flex-col"
+            >
+                <!-- Header -->
+                <div
+                    class="flex items-center justify-between px-5 py-3 border-b border-slate-200 bg-slate-50"
+                >
+                    <h2 class="text-base font-semibold text-slate-800">
+                        {{ editingBarcode ? 'Edit Barcode' : 'Create Barcode' }}
+                    </h2>
+                    <button
+                        type="button"
+                        class="text-slate-400 hover:text-slate-600 p-1 rounded transition-colors"
+                        aria-label="Close"
+                        @click="close"
+                    >
+                        <XMarkIcon class="w-5 h-5" />
+                    </button>
+                </div>
 
-      <div class="field">
-        <label for="modal-category">Category</label>
-        <Select
-          id="modal-category"
-          v-model="barcodeCategory"
-          :options="categories"
-          optionLabel="name"
-          optionValue="id"
-          class="w-full"
-        />
-      </div>
+                <!-- Body -->
+                <div class="p-5 flex flex-col gap-4">
+                    <div class="flex flex-col gap-1">
+                        <label for="modal-type" class="text-sm font-medium text-slate-700"
+                            >Type</label
+                        >
+                        <select
+                            id="modal-type"
+                            v-model="barcodeType"
+                            class="w-full px-3 py-2.5 border border-slate-300 rounded bg-white text-slate-800 text-sm leading-snug focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        >
+                            <option v-for="t in types" :key="t.value" :value="t.value">
+                                {{ t.label }}
+                            </option>
+                        </select>
+                    </div>
 
-      <div class="field">
-        <label for="modal-value">Value *</label>
-        <InputText
-          id="modal-value"
-          v-model="barcodeValue"
-          class="w-full"
-          :class="{ 'p-invalid': validationError }"
-          @keyup.enter="handleSave"
-        />
-        <small v-if="validationError" class="p-error">{{ validationError }}</small>
-      </div>
-    </div>
+                    <div class="flex flex-col gap-1">
+                        <label for="modal-category" class="text-sm font-medium text-slate-700"
+                            >Category</label
+                        >
+                        <select
+                            id="modal-category"
+                            v-model="barcodeCategory"
+                            class="w-full px-3 py-2.5 border border-slate-300 rounded bg-white text-slate-800 text-sm leading-snug focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        >
+                            <option v-for="c in categories" :key="c.id" :value="c.id">
+                                {{ c.name }}
+                            </option>
+                        </select>
+                    </div>
 
-    <template #footer>
-      <div class="dialog-footer">
-        <Button label="Cancel" severity="secondary" text @click="emit('update:visible', false)" />
-        <Button
-          :label="editingBarcode ? 'Save' : 'Create'"
-          icon="pi pi-check"
-          @click="handleSave"
-          :disabled="!isValid"
-        />
-      </div>
-    </template>
-  </Dialog>
+                    <div class="flex flex-col gap-1">
+                        <label for="modal-value" class="text-sm font-medium text-slate-700"
+                            >Value *</label
+                        >
+                        <input
+                            id="modal-value"
+                            v-model="barcodeValue"
+                            type="text"
+                            class="w-full px-3 py-2.5 border border-slate-300 rounded bg-white text-slate-800 text-sm leading-snug focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            :class="{ 'border-red-400 focus:ring-red-400': validationError }"
+                            @keyup.enter="handleSave"
+                        />
+                        <small v-if="validationError" class="text-xs text-red-500">{{
+                            validationError
+                        }}</small>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div
+                    class="flex items-center justify-end gap-2 px-5 py-3 bg-slate-50 border-t border-slate-200"
+                >
+                    <button
+                        type="button"
+                        class="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded hover:bg-slate-100 transition-colors"
+                        @click="close"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="button"
+                        class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded transition-colors"
+                        :disabled="!isValid"
+                        @click="handleSave"
+                    >
+                        <CheckIcon class="w-4 h-4" />
+                        {{ editingBarcode ? 'Save changes' : 'Create' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </Teleport>
 </template>
-
-<style scoped>
-.form-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.w-full { width: 100%; }
-
-.dialog-footer {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-}
-
-.p-error {
-  color: var(--red-500);
-  font-size: 0.8rem;
-}
-</style>

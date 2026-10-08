@@ -17,15 +17,14 @@
     "generate-pwa-assets": "pwa-assets-generator --preset minimal public/code-icon.svg"
   },
   "dependencies": {
-    "@primevue/themes": "^4.0.0",
+    "@heroicons/vue": "^2.2.0",
     "bwip-js": "^4.2.0",
     "dexie": "^4.4.6",
-    "primeicons": "^7.0.0",
-    "primevue": "^4.0.0",
     "uuid": "^14.0.2",
     "vue": "^3.5.42"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
     "@tsconfig/node24": "^24.0.5",
     "@types/bwip-js": "^3.2.0",
     "@types/jsdom": "^30.0.0",
@@ -47,6 +46,7 @@
     "npm-run-all2": "^9.0.3",
     "oxlint": "~1.82.0",
     "prettier": "3.9.6",
+    "tailwindcss": "^4.3.3",
     "typescript": "~6.0.0",
     "vite": "^8.2.2",
     "vite-plugin-pwa": "^0.21.2",

@@ -3,6 +3,7 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
 import { VitePWA } from 'vite-plugin-pwa'
+import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   build: {
@@ -19,6 +20,7 @@ export default defineConfig({
     strictPort: true
   },
   plugins: [
+    tailwindcss(),
     vue(),
     vueDevTools(),
     VitePWA({

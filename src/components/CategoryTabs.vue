@@ -1,24 +1,43 @@
 <script setup lang="ts">
-import type { Category } from '../db';
-import Tabs from 'primevue/tabs';
-import TabList from 'primevue/tablist';
-import Tab from 'primevue/tab';
+import type { Category } from '../db'
 
 defineProps<{
-  categories: Category[];
-  modelValue: string;
-}>();
+    categories: Category[]
+    modelValue: string
+}>()
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: string): void;
-}>();
+    (e: 'update:modelValue', value: string): void
+}>()
 </script>
 
 <template>
-  <Tabs :value="modelValue" @update:value="emit('update:modelValue', $event as string)">
-    <TabList>
-      <Tab value="all">All</Tab>
-      <Tab v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}</Tab>
-    </TabList>
-  </Tabs>
+    <nav class="flex gap-1 overflow-x-auto scrollbar-none" aria-label="Category tabs">
+        <button
+            type="button"
+            class="px-4 py-2 text-sm font-medium border rounded-t transition-colors whitespace-nowrap"
+            :class="
+                modelValue === 'all'
+                    ? 'bg-olive-400 border-olive-400 text-white font-semibold'
+                    : 'bg-slate-100 border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-200'
+            "
+            @click="emit('update:modelValue', 'all')"
+        >
+            All
+        </button>
+        <button
+            v-for="c in categories"
+            :key="c.id"
+            type="button"
+            class="px-4 py-2 text-sm font-medium border rounded-t transition-colors whitespace-nowrap"
+            :class="
+                modelValue === c.id
+                    ? 'bg-olive-400 border-olive-400 text-white font-semibold'
+                    : 'bg-slate-100 border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-200'
+            "
+            @click="emit('update:modelValue', c.id)"
+        >
+            {{ c.name }}
+        </button>
+    </nav>
 </template>

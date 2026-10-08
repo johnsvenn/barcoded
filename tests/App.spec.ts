@@ -5,7 +5,7 @@ import { setupUI } from '../src/setupUI';
 
 vi.mock('bwip-js', () => ({
   default: {
-    toCanvas: vi.fn(),
+    toCanvas: vi.fn<() => void>(),
   },
 }));
 

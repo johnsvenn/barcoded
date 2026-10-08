@@ -1,185 +1,170 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
-import type { Category } from '../db';
-import Dialog from 'primevue/dialog';
-import InputText from 'primevue/inputtext';
-import Button from 'primevue/button';
+import { ref, watch } from 'vue'
+import type { Category } from '../db'
+import { PlusIcon, PencilIcon, TrashIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 
 const props = defineProps<{
-  visible: boolean;
-  categories: Category[];
-}>();
+    visible: boolean
+    categories: Category[]
+}>()
 
 const emit = defineEmits<{
-  (e: 'update:visible', value: boolean): void;
-  (e: 'add', name: string): void;
-  (e: 'update', id: string, name: string): void;
-  (e: 'delete', category: Category): void;
-}>();
+    (e: 'update:visible', value: boolean): void
+    (e: 'add', name: string): void
+    (e: 'update', id: string, name: string): void
+    (e: 'delete', category: Category): void
+}>()
 
-const editingCat = ref<Category | null>(null);
-const newCatName = ref('');
-const catNameError = ref('');
+const editingCat = ref<Category | null>(null)
+const newCatName = ref('')
+const catNameError = ref('')
 
 const resetForm = () => {
-  editingCat.value = null;
-  newCatName.value = '';
-  catNameError.value = '';
-};
+    editingCat.value = null
+    newCatName.value = ''
+    catNameError.value = ''
+}
 
 watch(
-  () => props.visible,
-  (isVis) => {
-    if (isVis) resetForm();
-  }
-);
+    () => props.visible,
+    (isVis) => {
+        if (isVis) resetForm()
+    },
+)
 
 const startEditCat = (cat: Category) => {
-  editingCat.value = cat;
-  newCatName.value = cat.name;
-  catNameError.value = '';
-};
+    editingCat.value = cat
+    newCatName.value = cat.name
+    catNameError.value = ''
+}
 
 const saveCat = () => {
-  const name = newCatName.value.trim();
-  if (!name) {
-    catNameError.value = 'Name is required';
-    return;
-  }
+    const name = newCatName.value.trim()
+    if (!name) {
+        catNameError.value = 'Name is required'
+        return
+    }
 
-  if (editingCat.value) {
-    emit('update', editingCat.value.id, name);
-  } else {
-    emit('add', name);
-  }
+    if (editingCat.value) {
+        emit('update', editingCat.value.id, name)
+    } else {
+        emit('add', name)
+    }
 
-  resetForm();
-};
+    resetForm()
+}
+
+const close = () => {
+    emit('update:visible', false)
+}
 </script>
 
 <template>
-  <Dialog
-    :visible="visible"
-    @update:visible="emit('update:visible', $event)"
-    header="Manage Categories"
-    modal
-    :style="{ width: '460px' }"
-  >
-    <!-- Add / edit inline form -->
-    <div class="cat-add-form">
-      <InputText
-        v-model="newCatName"
-        class="w-full"
-        :placeholder="editingCat ? 'Edit name…' : 'New category name…'"
-        @keyup.enter="saveCat"
-      />
-      <small v-if="catNameError" class="p-error">{{ catNameError }}</small>
-      <div class="cat-add-actions">
-        <Button v-if="editingCat" label="Cancel" severity="secondary" text @click="resetForm" />
-        <Button
-          :label="editingCat ? 'Save' : 'Add Category'"
-          icon="pi pi-plus"
-          @click="saveCat"
-          :disabled="!newCatName.trim()"
-        />
-      </div>
-    </div>
+    <Teleport to="body">
+        <div
+            v-if="visible"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs"
+            @click.self="close"
+            @keydown.esc="close"
+        >
+            <div
+                class="bg-white rounded-lg shadow-xl border border-slate-300 w-full max-w-md overflow-hidden flex flex-col"
+            >
+                <!-- Header -->
+                <div
+                    class="flex items-center justify-between px-5 py-3 border-b border-slate-200 bg-slate-50"
+                >
+                    <h2 class="text-base font-semibold text-slate-800">Manage Categories</h2>
+                    <button
+                        type="button"
+                        class="text-slate-400 hover:text-slate-600 p-1 rounded transition-colors"
+                        aria-label="Close"
+                        @click="close"
+                    >
+                        <XMarkIcon class="w-5 h-5" />
+                    </button>
+                </div>
 
-    <hr class="divider" />
+                <!-- Body -->
+                <div class="p-5 flex flex-col gap-4">
+                    <!-- Add / edit inline form -->
+                    <div class="flex flex-col gap-2">
+                        <input
+                            v-model="newCatName"
+                            type="text"
+                            class="w-full px-3 py-2.5 border border-slate-300 rounded bg-white text-slate-800 text-sm leading-snug focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            :placeholder="editingCat ? 'Edit name…' : 'New category name…'"
+                            @keyup.enter="saveCat"
+                        />
+                        <small v-if="catNameError" class="text-xs text-red-500">{{
+                            catNameError
+                        }}</small>
+                        <div class="flex justify-end gap-2">
+                            <button
+                                v-if="editingCat"
+                                type="button"
+                                class="px-3 py-1.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded hover:bg-slate-100 transition-colors"
+                                @click="resetForm"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                class="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded transition-colors"
+                                :disabled="!newCatName.trim()"
+                                @click="saveCat"
+                            >
+                                <PlusIcon class="w-4 h-4" />
+                                {{ editingCat ? 'Save' : 'Add Category' }}
+                            </button>
+                        </div>
+                    </div>
 
-    <!-- Category list -->
-    <ul class="cat-list">
-      <li v-if="categories.length === 0" class="cat-list-empty">No categories yet.</li>
-      <li
-        v-for="cat in categories"
-        :key="cat.id"
-        class="cat-list-item"
-        :class="{ 'is-editing': editingCat?.id === cat.id }"
-      >
-        <span class="cat-list-name">{{ cat.name }}</span>
-        <div class="cat-list-actions">
-          <Button
-            icon="pi pi-pencil"
-            text
-            rounded
-            aria-label="Edit"
-            size="small"
-            @click="startEditCat(cat)"
-          />
-          <Button
-            icon="pi pi-trash"
-            text
-            rounded
-            severity="danger"
-            aria-label="Delete"
-            size="small"
-            @click="emit('delete', cat)"
-          />
+                    <hr class="border-slate-200 my-1" />
+
+                    <!-- Category list -->
+                    <ul
+                        class="flex flex-col max-h-64 overflow-y-auto border border-slate-200 rounded divide-y divide-slate-100"
+                    >
+                        <li
+                            v-if="categories.length === 0"
+                            class="text-center py-4 text-sm text-slate-500"
+                        >
+                            No categories yet.
+                        </li>
+                        <li
+                            v-for="cat in categories"
+                            :key="cat.id"
+                            class="flex items-center justify-between px-3 py-2 transition-colors"
+                            :class="
+                                editingCat?.id === cat.id
+                                    ? 'bg-blue-50 text-blue-900'
+                                    : 'hover:bg-slate-50'
+                            "
+                        >
+                            <span class="text-sm text-slate-800 font-medium">{{ cat.name }}</span>
+                            <div class="flex items-center gap-1">
+                                <button
+                                    type="button"
+                                    aria-label="Edit"
+                                    class="p-1.5 rounded text-slate-500 hover:text-slate-700 hover:bg-slate-200 transition-colors"
+                                    @click="startEditCat(cat)"
+                                >
+                                    <PencilIcon class="w-4 h-4" />
+                                </button>
+                                <button
+                                    type="button"
+                                    aria-label="Delete"
+                                    class="p-1.5 rounded text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors"
+                                    @click="emit('delete', cat)"
+                                >
+                                    <TrashIcon class="w-4 h-4" />
+                                </button>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
         </div>
-      </li>
-    </ul>
-  </Dialog>
+    </Teleport>
 </template>
-
-<style scoped>
-.cat-add-form {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.w-full { width: 100%; }
-
-.cat-add-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
-  margin-top: 0.25rem;
-}
-
-.divider {
-  border: none;
-  border-top: 1px solid var(--surface-border);
-  margin: 1rem 0;
-}
-
-.cat-list {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  max-height: 260px;
-  overflow-y: auto;
-}
-
-.cat-list-empty {
-  text-align: center;
-  color: var(--text-color-secondary);
-  padding: 1rem 0;
-  font-size: 0.9rem;
-}
-
-.cat-list-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.4rem 0.6rem;
-  border-radius: 4px;
-  transition: background 0.12s;
-}
-
-.cat-list-item:hover { background: var(--surface-hover); }
-.cat-list-item.is-editing { background: var(--primary-50, #e8f5e9); }
-
-.cat-list-name { font-size: 0.9rem; }
-
-.cat-list-actions {
-  display: flex;
-  gap: 0.1rem;
-}
-
-.p-error {
-  color: var(--red-500);
-  font-size: 0.8rem;
-}
-</style>

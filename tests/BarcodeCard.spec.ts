@@ -6,7 +6,7 @@ import type { Barcode } from '../src/db';
 // Mock bwip-js to avoid canvas rendering errors in headless node environment
 vi.mock('bwip-js', () => ({
   default: {
-    toCanvas: vi.fn(),
+    toCanvas: vi.fn<() => void>(),
   },
 }));
 
