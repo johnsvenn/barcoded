@@ -11,6 +11,7 @@ defineProps<{
 const emit = defineEmits<{
     (e: 'edit', barcode: Barcode): void
     (e: 'delete', event: Event, id: string): void
+    (e: 'scan', barcode: Barcode): void
 }>()
 </script>
 
@@ -24,6 +25,7 @@ const emit = defineEmits<{
             :type-bcid="getTypeDef(b.type)?.bcid ?? b.type"
             @edit="emit('edit', $event)"
             @delete="(evt, id) => emit('delete', evt, id)"
+            @scan="emit('scan', $event)"
         />
 
         <div

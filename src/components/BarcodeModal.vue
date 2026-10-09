@@ -2,7 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import type { Barcode, Category } from '../db'
 import { getValidationError } from '../utils/validation'
-import { CheckIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+import { CheckCircleIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 
 const props = defineProps<{
     visible: boolean
@@ -137,7 +137,7 @@ const close = () => {
 
                 <!-- Footer -->
                 <div
-                    class="flex items-center justify-end gap-2 px-5 py-3 bg-slate-50 border-t border-slate-200"
+                    class="flex justify-between gap-2 px-5 py-3 bg-slate-50 border-t border-slate-200"
                 >
                     <button
                         type="button"
@@ -148,11 +148,11 @@ const close = () => {
                     </button>
                     <button
                         type="button"
-                        class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded transition-colors"
+                        class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-green-500 hover:bg-green-600 disabled:bg-slate-100 disabled:text-slate-300 disabled:cursor-not-allowed rounded transition-colors"
                         :disabled="!isValid"
                         @click="handleSave"
                     >
-                        <CheckIcon class="w-4 h-4" />
+                        <CheckCircleIcon class="w-4 h-4" />
                         {{ editingBarcode ? 'Save changes' : 'Create' }}
                     </button>
                 </div>

@@ -6,7 +6,8 @@ import BarcodeGrid from './components/BarcodeGrid.vue'
 import CategoryTabs from './components/CategoryTabs.vue'
 import BarcodeModal from './components/BarcodeModal.vue'
 import CategoryModal from './components/CategoryModal.vue'
-import { PencilSquareIcon, PlusIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
+import BarcodeScanModal from './components/BarcodeScanModal.vue'
+import { ListBulletIcon, PlusIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 import { v4 as uuidv4 } from 'uuid'
 
 // ─── Barcode type definitions ───────────────────────────────────────────────
@@ -28,12 +29,22 @@ const editingBarcode = ref<Barcode | null>(null)
 const showCatModal = ref(false)
 const deletingBarcodeId = ref<string | null>(null)
 
+// Scan modal state
+const showScanModal = ref(false)
+const scanIndex = ref(0)
+
 // ─── Filtered barcodes ──────────────────────────────────────────────────────
 const filteredBarcodes = computed(() =>
     filterCategory.value === 'all'
         ? barcodes.value
         : barcodes.value.filter((b) => b.categoryId === filterCategory.value),
 )
+
+const openScanModal = (b: Barcode) => {
+    const idx = filteredBarcodes.value.findIndex((x) => x.id === b.id)
+    scanIndex.value = idx >= 0 ? idx : 0
+    showScanModal.value = true
+}
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 const getTypeDef = (value: string) => types.value.find((t) => t.value === value)
@@ -120,24 +131,24 @@ onMounted(loadData)
 </script>
 
 <template>
-    <AppLayout title="Barcode Generator">
+    <AppLayout title="Barcoded">
         <template #actions>
             <button
                 type="button"
-                class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded hover:bg-slate-50 hover:text-slate-800 transition-colors"
+                class="inline-flex items-center gap-1.5 px-3 py-1 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded hover:bg-slate-50 hover:text-slate-800 transition-colors"
                 aria-label="Manage categories"
                 title="Manage Categories"
                 @click="showCatModal = true"
             >
-                <PencilSquareIcon class="w-4 h-4" />
+                <ListBulletIcon class="w-6 h-6" />
                 Categories
             </button>
             <button
                 type="button"
-                class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded transition-colors"
+                class="inline-flex items-center gap-1.5 px-3 py-1 text-sm font-medium text-white bg-green-500 hover:bg-green-600 rounded transition-colors"
                 @click="openCreateModal"
             >
-                <PlusIcon class="w-4 h-4" />
+                <PlusIcon class="w-6 h-6" />
                 New Barcode
             </button>
         </template>
@@ -152,6 +163,7 @@ onMounted(loadData)
                 :get-type-def="getTypeDef"
                 @edit="openEditModal"
                 @delete="confirmDeleteBarcode"
+                @scan="openScanModal"
             />
         </div>
 
@@ -165,6 +177,14 @@ onMounted(loadData)
                 filterCategory !== 'all' ? filterCategory : (categories[0]?.id ?? '')
             "
             @save="handleSaveBarcode"
+        />
+
+        <!-- Scan / View Barcode Modal -->
+        <BarcodeScanModal
+            v-model:visible="showScanModal"
+            v-model:current-index="scanIndex"
+            :barcodes="filteredBarcodes"
+            :get-type-def="getTypeDef"
         />
 
         <!-- Category Management Modal -->
@@ -202,7 +222,7 @@ onMounted(loadData)
                             </p>
                         </div>
                     </div>
-                    <div class="flex justify-end gap-2 mt-2">
+                    <div class="flex justify-between gap-2 mt-2">
                         <button
                             type="button"
                             class="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded hover:bg-slate-100 transition-colors"

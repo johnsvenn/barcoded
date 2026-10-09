@@ -30,8 +30,8 @@ export default defineConfig({
       },
       includeAssets: ['favicon.ico', 'apple-touch-icon-180x180.png', 'code-icon.svg'],
       manifest: {
-        name: 'Barcode Generator',
-        short_name: 'Barcodes',
+        name: 'Barcoded',
+        short_name: 'Barcoded',
         description: 'Generate and manage barcodes and QR codes locally — no data leaves your device.',
         theme_color: '#ffffff',
         background_color: '#ffffff',
