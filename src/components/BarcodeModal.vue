@@ -66,7 +66,7 @@ const close = () => {
             @keydown.esc="close"
         >
             <div
-                class="bg-white rounded-lg shadow-xl border border-slate-300 w-full max-w-md overflow-hidden flex flex-col"
+                class="bg-white rounded shadow-xl border border-slate-300 w-full max-w-md overflow-hidden flex flex-col"
             >
                 <!-- Header -->
                 <div

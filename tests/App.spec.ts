@@ -17,6 +17,6 @@ describe('App.vue', () => {
       },
     });
 
-    expect(wrapper.text()).toContain('Barcode Generator');
+    expect(wrapper.text()).toContain('Barcoded');
   });
 });

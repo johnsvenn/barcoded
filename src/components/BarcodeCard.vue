@@ -3,6 +3,7 @@ import { onMounted, watch, nextTick, ref } from 'vue'
 import type { Barcode } from '../db'
 import bwipjs from 'bwip-js'
 import { TrashIcon, PencilSquareIcon } from '@heroicons/vue/24/outline'
+import DeleteConfirmModal from './DeleteConfirmModal.vue'
 
 const props = defineProps<{
     barcode: Barcode
@@ -17,6 +18,18 @@ const emit = defineEmits<{
 }>()
 
 const canvasRef = ref<HTMLCanvasElement | null>(null)
+const showDeleteModal = ref(false)
+const lastDeleteEvent = ref<Event | null>(null)
+
+const openDeleteModal = (event: Event) => {
+    lastDeleteEvent.value = event
+    showDeleteModal.value = true
+}
+
+const handleConfirmDelete = () => {
+    const event = lastDeleteEvent.value || new CustomEvent('delete')
+    emit('delete', event, props.barcode.id)
+}
 
 const renderBarcode = () => {
     if (!canvasRef.value) return
@@ -88,10 +101,17 @@ watch(
                 type="button"
                 aria-label="Delete barcode"
                 class="delete-btn inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-600 bg-white hover:text-red-700 transition-colors"
-                @click="emit('delete', $event, barcode.id)"
+                @click="openDeleteModal($event)"
             >
                 <TrashIcon class="w-6 h-6" />
             </button>
         </div>
+
+        <DeleteConfirmModal
+            v-model:visible="showDeleteModal"
+            title="Delete barcode?"
+            description="This action cannot be undone."
+            @confirm="handleConfirmDelete"
+        />
     </div>
 </template>

@@ -2,6 +2,7 @@
 import { ref, watch } from 'vue'
 import type { Category } from '../db'
 import { PlusIcon, PencilSquareIcon, TrashIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+import DeleteConfirmModal from './DeleteConfirmModal.vue'
 
 const props = defineProps<{
     visible: boolean
@@ -18,11 +19,15 @@ const emit = defineEmits<{
 const editingCat = ref<Category | null>(null)
 const newCatName = ref('')
 const catNameError = ref('')
+const categoryToDelete = ref<Category | null>(null)
+const showDeleteModal = ref(false)
 
 const resetForm = () => {
     editingCat.value = null
     newCatName.value = ''
     catNameError.value = ''
+    categoryToDelete.value = null
+    showDeleteModal.value = false
 }
 
 watch(
@@ -36,6 +41,18 @@ const startEditCat = (cat: Category) => {
     editingCat.value = cat
     newCatName.value = cat.name
     catNameError.value = ''
+}
+
+const promptDeleteCat = (cat: Category) => {
+    categoryToDelete.value = cat
+    showDeleteModal.value = true
+}
+
+const handleConfirmDelete = () => {
+    if (categoryToDelete.value) {
+        emit('delete', categoryToDelete.value)
+        categoryToDelete.value = null
+    }
 }
 
 const saveCat = () => {
@@ -68,7 +85,7 @@ const close = () => {
             @keydown.esc="close"
         >
             <div
-                class="bg-white rounded-lg shadow-xl border border-slate-300 w-full max-w-md overflow-hidden flex flex-col"
+                class="bg-white rounded shadow-xl border border-slate-300 w-full max-w-md overflow-hidden flex flex-col"
             >
                 <!-- Header -->
                 <div
@@ -156,7 +173,7 @@ const close = () => {
                                     type="button"
                                     aria-label="Delete"
                                     class="p-1.5 rounded text-red-500 hover:text-red-700 transition-colors"
-                                    @click="emit('delete', cat)"
+                                    @click="promptDeleteCat(cat)"
                                 >
                                     <TrashIcon class="w-6 h-6" />
                                 </button>
@@ -177,5 +194,12 @@ const close = () => {
                 </div>
             </div>
         </div>
+
+        <DeleteConfirmModal
+            v-model:visible="showDeleteModal"
+            title="Delete category?"
+            description="This action cannot be undone."
+            @confirm="handleConfirmDelete"
+        />
     </Teleport>
 </template>

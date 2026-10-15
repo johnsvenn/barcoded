@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
+import { nextTick } from 'vue';
 import BarcodeCard from '../src/components/BarcodeCard.vue';
 import type { Barcode } from '../src/db';
 
@@ -33,8 +34,9 @@ describe('BarcodeCard.vue', () => {
     expect(wrapper.find('canvas').exists()).toBe(true);
   });
 
-  it('emits delete event when delete button is clicked', async () => {
+  it('opens confirmation modal and emits delete event when deletion is confirmed', async () => {
     const wrapper = mount(BarcodeCard, {
+      attachTo: document.body,
       props: {
         barcode: sampleBarcode,
         typeLabel: 'QR Code',
@@ -45,6 +47,11 @@ describe('BarcodeCard.vue', () => {
     const deleteBtn = wrapper.find('.delete-btn');
     expect(deleteBtn.exists()).toBe(true);
     await deleteBtn.trigger('click');
+
+    const confirmBtn = document.body.querySelector('.confirm-btn') as HTMLButtonElement;
+    expect(confirmBtn).not.toBeNull();
+    confirmBtn.click();
+    await nextTick();
 
     const emitted = wrapper.emitted('delete');
     expect(emitted).toBeTruthy();

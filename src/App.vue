@@ -1,22 +1,19 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { db, type Barcode, type Category } from './db'
+import { BARCODE_TYPES } from './constants/barcodeTypes'
 import AppLayout from './components/AppLayout.vue'
 import BarcodeGrid from './components/BarcodeGrid.vue'
 import CategoryTabs from './components/CategoryTabs.vue'
 import BarcodeModal from './components/BarcodeModal.vue'
 import CategoryModal from './components/CategoryModal.vue'
 import BarcodeScanModal from './components/BarcodeScanModal.vue'
-import { ListBulletIcon, PlusIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
+import SettingsModal from './components/SettingsModal.vue'
+import { ListBulletIcon, PlusIcon, AdjustmentsHorizontalIcon } from '@heroicons/vue/24/outline'
 import { v4 as uuidv4 } from 'uuid'
 
 // ─── Barcode type definitions ───────────────────────────────────────────────
-const types = ref([
-    { label: 'QR Code', value: 'qrcode', bcid: 'qrcode' },
-    { label: 'Code 39', value: 'code39', bcid: 'code39' },
-    { label: 'EAN-13', value: 'ean13', bcid: 'ean13' },
-    { label: 'Code 128', value: 'code128', bcid: 'code128' },
-])
+const types = ref(BARCODE_TYPES)
 
 // ─── State ───────────────────────────────────────────────────────────────────
 const barcodes = ref<Barcode[]>([])
@@ -27,7 +24,7 @@ const filterCategory = ref('all')
 const showBarcodeModal = ref(false)
 const editingBarcode = ref<Barcode | null>(null)
 const showCatModal = ref(false)
-const deletingBarcodeId = ref<string | null>(null)
+const showSettingsModal = ref(false)
 
 // Scan modal state
 const showScanModal = ref(false)
@@ -94,14 +91,8 @@ const handleSaveBarcode = async (data: { type: string; value: string; categoryId
     await loadData()
 }
 
-const confirmDeleteBarcode = (_event: Event, id: string) => {
-    deletingBarcodeId.value = id
-}
-
-const handleDeleteConfirm = async () => {
-    if (!deletingBarcodeId.value) return
-    await db.barcodes.delete(deletingBarcodeId.value)
-    deletingBarcodeId.value = null
+const handleDeleteBarcode = async (_event: Event, id: string) => {
+    await db.barcodes.delete(id)
     await loadData()
 }
 
@@ -135,6 +126,14 @@ onMounted(loadData)
         <template #actions>
             <button
                 type="button"
+                class="inline-flex items-center gap-1.5 px-3 py-1 text-sm font-medium text-white bg-green-500 hover:bg-green-600 rounded transition-colors"
+                @click="openCreateModal"
+            >
+                <PlusIcon class="w-6 h-6" />
+                New Barcode
+            </button>
+            <button
+                type="button"
                 class="inline-flex items-center gap-1.5 px-3 py-1 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded hover:bg-slate-50 hover:text-slate-800 transition-colors"
                 aria-label="Manage categories"
                 title="Manage Categories"
@@ -145,11 +144,11 @@ onMounted(loadData)
             </button>
             <button
                 type="button"
-                class="inline-flex items-center gap-1.5 px-3 py-1 text-sm font-medium text-white bg-green-500 hover:bg-green-600 rounded transition-colors"
-                @click="openCreateModal"
-            >
-                <PlusIcon class="w-6 h-6" />
-                New Barcode
+                class="inline-flex items-center gap-1.5 px-3 py-1 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded hover:bg-slate-50 hover:text-slate-800 transition-colors"
+                aria-label="Settings"
+                title="Settings"
+                @click="showSettingsModal = true">
+                <AdjustmentsHorizontalIcon class="w-6 h-6" />
             </button>
         </template>
 
@@ -162,7 +161,7 @@ onMounted(loadData)
                 :barcodes="filteredBarcodes"
                 :get-type-def="getTypeDef"
                 @edit="openEditModal"
-                @delete="confirmDeleteBarcode"
+                @delete="handleDeleteBarcode"
                 @scan="openScanModal"
             />
         </div>
@@ -196,50 +195,9 @@ onMounted(loadData)
             @delete="handleDeleteCat"
         />
 
-        <!-- Confirmation Modal for Delete -->
-        <Teleport to="body">
-            <div
-                v-if="deletingBarcodeId !== null"
-                class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs"
-                @click.self="deletingBarcodeId = null"
-                @keydown.esc="deletingBarcodeId = null"
-            >
-                <div
-                    class="bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 p-6 max-w-sm w-full flex flex-col gap-4"
-                >
-                    <div class="flex items-center gap-3">
-                        <div
-                            class="p-2 rounded-full bg-red-100 dark:bg-red-950/50 text-red-600 dark:text-red-400"
-                        >
-                            <ExclamationTriangleIcon class="w-6 h-6" />
-                        </div>
-                        <div>
-                            <h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">
-                                Delete barcode?
-                            </h3>
-                            <p class="text-xs text-slate-500 dark:text-slate-400">
-                                This action cannot be undone.
-                            </p>
-                        </div>
-                    </div>
-                    <div class="flex justify-between gap-2 mt-2">
-                        <button
-                            type="button"
-                            class="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded hover:bg-slate-100 transition-colors"
-                            @click="deletingBarcodeId = null"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="button"
-                            class="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded transition-colors"
-                            @click="handleDeleteConfirm"
-                        >
-                            Delete
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </Teleport>
+        <SettingsModal
+            v-model:visible="showSettingsModal"
+            @imported="loadData"
+        />
     </AppLayout>
 </template>
