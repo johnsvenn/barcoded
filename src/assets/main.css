@@ -1,1 +1,155 @@
 @import 'tailwindcss';
+
+/* ─── Layer 1: Palette ───────────────────────────────────────────────────────
+   Raw named colours. These are registered in @theme so Tailwind utilities
+   such as bg-olive-400 are automatically generated.
+   Add / swap colours here — nothing else needs to change.
+   ─────────────────────────────────────────────────────────────────────────── */
+@theme {
+    /* Olive scale */
+    /*
+    --color-olive-50:  #f7f7ec;
+    --color-olive-100: #ededcf;
+    --color-olive-200: #dcdca3;
+    --color-olive-300: #c4c46d;
+    --color-olive-400: #8b8b2d;
+    --color-olive-500: #737320;
+    --color-olive-600: #5c5c18;
+    --color-olive-700: #464611;
+    --color-olive-800: #30300b;
+    --color-olive-900: #1a1a05;
+    */
+
+    /* You can add more palette scales here, e.g. slate is already built-in */
+}
+
+/* ─── Layer 2: Semantic / Element tokens (BEM-style) ─────────────────────────
+   These map palette colours onto named UI roles.
+   Convention: --{block}__{element}--{modifier}
+   Change these to retheme the whole UI without touching components.
+   ─────────────────────────────────────────────────────────────────────────── */
+:root {
+
+
+    /* ── Header ── */
+    --header__bar--bg:              var(--color-teal-600); /* solid colour fallback */
+    --header__bar--bg-image:        linear-gradient(to right, var(--color-teal-600), var(--color-cyan-200)); /* set to 'none' for solid colour */
+    --header__bar--border:          var(--main__body--bg);  /* bottom edge shown when contrast is low */
+    --header__title--color:         var(--color-slate-800);
+
+    /* ── Main page body ──
+       Should match the active tab colour to create a "selected tab bleeds into page" effect */
+    --main__body--bg:               var(--color-stone-100);
+    --main__body--color:            var(--color-slate-900);
+
+    /* ── Tabs ── */
+    --tab__button--bg:              var(--color-stone-300);
+    --tab__button--color:           var(--color-slate-500);
+    --tab__button--border:          transparent;
+
+    --tab__button--hover--bg:       var(--color-stone-200);
+    --tab__button--hover--color:    var(--color-slate-700);
+
+    --tab__button--active--bg:      var(--main__body--bg);
+    --tab__button--active--color:   var(--main__body--color);
+    --tab__button--active--border:  var(--main__body--bg);
+
+    /* ── Action buttons (primary) ── */
+    --btn-primary__button--bg:        var(--color-green-500);
+    --btn-primary__button--color:     white;
+    --btn-primary__button--border:    transparent;
+    --btn-primary__button--hover--bg: var(--color-green-600);
+
+    /* ── Action buttons (secondary / ghost) ── */
+    --btn-secondary__button--bg:           white;
+    --btn-secondary__button--color:        var(--color-slate-600);
+    --btn-secondary__button--border:       var(--color-slate-300);
+    --btn-secondary__button--hover--bg:    var(--color-slate-50);
+    --btn-secondary__button--hover--color: var(--color-slate-800);
+}
+
+/* ─── Layer 3: Component classes ─────────────────────────────────────────────
+   BEM-ish utility classes built on the semantic tokens above.
+   Use these in templates instead of raw Tailwind utilities so that
+   rethemeing only requires changing Layer 2 variables.
+   ─────────────────────────────────────────────────────────────────────────── */
+@layer components {
+
+    /* ── Layout shell ── */
+    .app__shell {
+        @apply flex flex-col min-h-screen font-sans;
+        background-color: var(--main__body--bg);
+        color: var(--main__body--color);
+    }
+
+    /* ── Header bar ── */
+    .header__bar {
+        /* background-color is the solid fallback; background-image layers on top.
+           Set --header__bar--bg-image to 'none' to use the solid colour only. */
+        background-color: var(--header__bar--bg);
+        background-image: var(--header__bar--bg-image);
+        /* Bottom border gives a clear edge when header bg ≈ page bg */
+        border-bottom: 1px solid var(--header__bar--border);
+    }
+
+    .header__title {
+        @apply text-sm font-bold tracking-tight;
+        color: var(--header__title--color);
+    }
+
+    /* ── Tab nav container ── */
+    .tab__nav {
+        @apply flex gap-1 overflow-x-auto;
+        /* Hide scrollbar cross-browser */
+        scrollbar-width: none;
+    }
+    .tab__nav::-webkit-scrollbar { display: none; }
+
+    /* ── Individual tab button (default / inactive) ── */
+    .tab__button {
+        @apply px-4 py-2 text-sm font-medium border rounded-t transition-colors whitespace-nowrap;
+        background-color: var(--tab__button--bg);
+        color:            var(--tab__button--color);
+        border-color:     var(--tab__button--border);
+    }
+    .tab__button:hover {
+        background-color: var(--tab__button--hover--bg);
+        color:            var(--tab__button--hover--color);
+    }
+
+    /* ── Tab button active state ── */
+    .tab__button--active {
+        @apply font-semibold;
+        background-color: var(--tab__button--active--bg);
+        color:            var(--tab__button--active--color);
+        border-color:     var(--tab__button--active--border);
+    }
+    /* Active tab should not show a hover effect */
+    .tab__button--active:hover {
+        background-color: var(--tab__button--active--bg);
+        color:            var(--tab__button--active--color);
+    }
+
+    /* ── Primary action button ── */
+    .btn-primary__button {
+        @apply inline-flex items-center gap-1.5 px-3 py-1 text-sm font-medium rounded transition-colors;
+        background-color: var(--btn-primary__button--bg);
+        color:            var(--btn-primary__button--color);
+        border-color:     var(--btn-primary__button--border);
+    }
+    .btn-primary__button:hover {
+        background-color: var(--btn-primary__button--hover--bg);
+    }
+
+    /* ── Secondary / ghost action button ── */
+    .btn-secondary__button {
+        @apply inline-flex items-center gap-1.5 px-3 py-1 text-sm font-medium rounded border transition-colors;
+        background-color: var(--btn-secondary__button--bg);
+        color:            var(--btn-secondary__button--color);
+        border-color:     var(--btn-secondary__button--border);
+    }
+    .btn-secondary__button:hover {
+        background-color: var(--btn-secondary__button--hover--bg);
+        color:            var(--btn-secondary__button--hover--color);
+    }
+}

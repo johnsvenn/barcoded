@@ -126,7 +126,7 @@ onMounted(loadData)
         <template #actions>
             <button
                 type="button"
-                class="inline-flex items-center gap-1.5 px-3 py-1 text-sm font-medium text-white bg-green-500 hover:bg-green-600 rounded transition-colors"
+                class="btn-primary__button"
                 @click="openCreateModal"
             >
                 <PlusIcon class="w-6 h-6" />
@@ -134,7 +134,7 @@ onMounted(loadData)
             </button>
             <button
                 type="button"
-                class="inline-flex items-center gap-1.5 px-3 py-1 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded hover:bg-slate-50 hover:text-slate-800 transition-colors"
+                class="btn-secondary__button"
                 aria-label="Manage categories"
                 title="Manage Categories"
                 @click="showCatModal = true"
@@ -144,7 +144,7 @@ onMounted(loadData)
             </button>
             <button
                 type="button"
-                class="inline-flex items-center gap-1.5 px-3 py-1 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded hover:bg-slate-50 hover:text-slate-800 transition-colors"
+                class="btn-secondary__button"
                 aria-label="Settings"
                 title="Settings"
                 @click="showSettingsModal = true">
