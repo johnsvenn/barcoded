@@ -27,3 +27,12 @@ defineProps<{
         </main>
     </div>
 </template>
+
+<style scoped>
+/* Installed PWA: the app's own window already identifies it, so hide the title */
+@media (display-mode: standalone) {
+    .header__title {
+        display: none;
+    }
+}
+</style>
