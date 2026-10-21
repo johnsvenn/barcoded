@@ -1,23 +1,10 @@
-# app-barcode
+# Barcoded
 
-An opinioned utility app for generating and managing barcodes and QR codes for use when developing apps that consume them.
+An opinioned utility app for generating and displaying barcodes and QR codes for use when developing apps that consume them. 
 
-## Recommended IDE Setup
+Barcoded is intended to be run locally as a Progressive Web Application (PWA).
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
-
-## Recommended Browser Setup
-
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
-
-## Type Support for `.vue` Imports in TS
-
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+All data is stored locally in the browser's built in IndexedDB datastore.
 
 ## Customize configuration
 
@@ -53,9 +40,9 @@ npm run test:unit
 npm run lint
 ```
 
-## Progressive Web App (PWA)
+## Progressive Web Application (PWA)
 
-This app is configured as an installable Progressive Web App using `vite-plugin-pwa`.
+This app is configured as an installable Progressive Web Application using `vite-plugin-pwa`.
 
 ### Regenerating PWA Assets
 If you update `public/code-icon.svg`, regenerate all PWA icons (PNG icons, apple-touch-icon, favicon):
@@ -63,14 +50,47 @@ If you update `public/code-icon.svg`, regenerate all PWA icons (PNG icons, apple
 npm run generate-pwa-assets
 ```
 
-### Testing the PWA Locally
-PWA installation and Service Worker caching require a production build:
-1. Build and start the preview server:
+### Building the PWA
+PWA installation and Service Worker caching only work with a production build, not `npm run dev`.
+
+1. Install dependencies (Node `^24.12.0` is required, see `engines` in `package.json`):
+   ```sh
+   npm install
+   ```
+2. Build the app:
    ```sh
    npm run build
-   npm run preview
    ```
-2. Open the URL provided by the preview command (typically `http://localhost:4173`).
+   This runs the TypeScript type-check, then compiles and minifies the app into the `dist/` folder. It also generates the Service Worker (`sw.js`) and the web app manifest. The build fails if the type-check fails, so fix any reported errors and run it again.
+
+### Serving the PWA
+Browsers only install a PWA from a secure origin. That means either `localhost` or a site served over HTTPS.
+
+**Option A: Vite preview server (localhost)**
+
+```sh
+npm run preview
+```
+
+Open the URL it prints, which is `http://localhost:4174` (the port is set in `vite.config.ts`, and the server fails rather than switching ports if it is already in use).
+
+**Option B: Any static file server**
+
+`dist/` is a plain static site, so you can serve it with any tool. For example:
+
+```sh
+npx serve dist
+```
+
+Or, with Python:
+
+```sh
+python3 -m http.server 8080 --directory dist
+```
+
+Then open `http://localhost:8080` (or the port your server reports).
+
+To install the app on another device on your network, you need HTTPS. Plain `http://` with an IP address will not offer installation. Deploy the contents of `dist/` to any HTTPS host (for example Netlify, Vercel, or GitHub Pages) to test on a phone.
 
 ### Installing the PWA
 - **Chrome / Edge (Desktop)**: Click the **Install Barcode Generator** icon in the right side of the address bar, or select **Menu (⋮) > Save and share > Install Barcode Generator...**.
@@ -82,4 +102,8 @@ PWA installation and Service Worker caching require a production build:
 2. Navigate to the **Application** tab:
    - **Manifest**: Verify application name, short name, theme color, display mode (`standalone`), and icons.
    - **Service Workers**: Verify `sw.js` is registered and active. Test offline capabilities by checking the **Offline** checkbox and refreshing the page.
+
+## Type Support for `.vue` Imports in TS
+
+TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
 
