@@ -125,26 +125,29 @@ onMounted(loadData)
     <AppLayout title="Barcoded">
         <template #actions>
             <button
+                ref="openCreateModalButton"
                 type="button"
-                class="btn-primary__button"
+                class="btn-primary__button btn-round btn-round--lg"
+                aria-label="New barcode"
+                title="New Barcode"
                 @click="openCreateModal"
             >
-                <PlusIcon class="w-6 h-6" />
-                New Barcode
+                <PlusIcon class="w-10 h-10" />
             </button>
             <button
+                ref="showCatModalButton"
                 type="button"
-                class="btn-secondary__button"
+                class="btn-secondary__button btn-round btn-round--sm"
                 aria-label="Manage categories"
                 title="Manage Categories"
                 @click="showCatModal = true"
             >
                 <ListBulletIcon class="w-6 h-6" />
-                Categories
             </button>
             <button
+                ref="showSettingsModalButton"
                 type="button"
-                class="btn-secondary__button"
+                class="btn-secondary__button btn-round btn-round--sm"
                 aria-label="Settings"
                 title="Settings"
                 @click="showSettingsModal = true">

@@ -92,7 +92,7 @@ watch(
             <button
                 type="button"
                 aria-label="Edit barcode"
-                class="edit-btn inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-slate-600 bg-white hover:text-slate-800 transition-colors"
+                class="edit-btn inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-slate-300 bg-white hover:text-slate-800 transition-colors"
                 @click="emit('edit', barcode)"
             >
                 <PencilSquareIcon class="w-6 h-6" />
@@ -100,7 +100,7 @@ watch(
             <button
                 type="button"
                 aria-label="Delete barcode"
-                class="delete-btn inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-600 bg-white hover:text-red-700 transition-colors"
+                class="delete-btn inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-slate-300 bg-white hover:text-red-700 transition-colors"
                 @click="openDeleteModal($event)"
             >
                 <TrashIcon class="w-6 h-6" />

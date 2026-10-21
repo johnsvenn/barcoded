@@ -58,13 +58,13 @@
     --btn-primary__button--bg:        var(--color-green-500);
     --btn-primary__button--color:     white;
     --btn-primary__button--border:    transparent;
-    --btn-primary__button--hover--bg: var(--color-green-600);
+    --btn-primary__button--hover--bg: var(--color-lime-400);
 
     /* ── Action buttons (secondary / ghost) ── */
     --btn-secondary__button--bg:           white;
     --btn-secondary__button--color:        var(--color-slate-600);
     --btn-secondary__button--border:       var(--color-slate-300);
-    --btn-secondary__button--hover--bg:    var(--color-slate-50);
+    --btn-secondary__button--hover--bg:    var(--color-yellow-300);
     --btn-secondary__button--hover--color: var(--color-slate-800);
 }
 
@@ -151,5 +151,18 @@
     .btn-secondary__button:hover {
         background-color: var(--btn-secondary__button--hover--bg);
         color:            var(--btn-secondary__button--hover--color);
+    }
+
+    /* ── Round icon-only button (modifier, combine with a button class above) ── */
+    .btn-round {
+        @apply inline-flex items-center justify-center p-0 rounded-full shrink-0 transition-colors;
+    }
+    .btn-round--lg {
+        width: 60px;
+        height: 60px;
+    }
+    .btn-round--sm {
+        width: 40px;
+        height: 40px;
     }
 }
