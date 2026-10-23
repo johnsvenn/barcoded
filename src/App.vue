@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { db, type Barcode, type Category } from './db'
+import { db, type Barcode, type Tag } from './db'
 import { BARCODE_TYPES } from './constants/barcodeTypes'
 import AppLayout from './components/AppLayout.vue'
 import BarcodeGrid from './components/BarcodeGrid.vue'
-import CategoryTabs from './components/CategoryTabs.vue'
+import TagTabs from './components/TagTabs.vue'
 import BarcodeModal from './components/BarcodeModal.vue'
-import CategoryModal from './components/CategoryModal.vue'
+import TagModal from './components/TagModal.vue'
 import BarcodeScanModal from './components/BarcodeScanModal.vue'
 import SettingsModal from './components/SettingsModal.vue'
-import { ListBulletIcon, PlusIcon, AdjustmentsHorizontalIcon } from '@heroicons/vue/24/outline'
+import { TagIcon, PlusIcon, AdjustmentsHorizontalIcon } from '@heroicons/vue/24/outline'
 import { v4 as uuidv4 } from 'uuid'
 import { deleteTag, resolveTagIds, tagKey } from './utils/tags'
 
@@ -18,13 +18,13 @@ const types = ref(BARCODE_TYPES)
 
 // ─── State ───────────────────────────────────────────────────────────────────
 const barcodes = ref<Barcode[]>([])
-const categories = ref<Category[]>([])
-const filterCategory = ref('all')
+const tags = ref<Tag[]>([])
+const filterTag = ref('all')
 
 // Modals state
 const showBarcodeModal = ref(false)
 const editingBarcode = ref<Barcode | null>(null)
-const showCatModal = ref(false)
+const showTagModal = ref(false)
 const showSettingsModal = ref(false)
 
 // Scan modal state
@@ -33,9 +33,9 @@ const scanIndex = ref(0)
 
 // ─── Filtered barcodes ──────────────────────────────────────────────────────
 const filteredBarcodes = computed(() =>
-    filterCategory.value === 'all'
+    filterTag.value === 'all'
         ? barcodes.value
-        : barcodes.value.filter((b) => b.tags.includes(filterCategory.value)),
+        : barcodes.value.filter((b) => b.tags.includes(filterTag.value)),
 )
 
 const openScanModal = (b: Barcode) => {
@@ -50,7 +50,7 @@ const getTypeDef = (value: string) => types.value.find((t) => t.value === value)
 // ─── Data loading ───────────────────────────────────────────────────────────
 const loadData = async () => {
     barcodes.value = await db.barcodes.orderBy('createdAt').reverse().toArray()
-    categories.value = await db.categories.toArray()
+    tags.value = await db.tags.toArray()
 }
 
 // ─── Barcode CRUD handlers ──────────────────────────────────────────────────
@@ -66,11 +66,11 @@ const openEditModal = (b: Barcode) => {
 
 const handleSaveBarcode = async (data: { type: string; value: string; tags: string[] }) => {
     const known = new Map(
-        (await db.categories.toArray()).map((c) => [tagKey(c.name), c]),
+        (await db.tags.toArray()).map((c) => [tagKey(c.name), c]),
     )
-    const created: Category[] = []
+    const created: Tag[] = []
     const tagIds = resolveTagIds(data.tags, known, created)
-    if (created.length > 0) await db.categories.bulkAdd(created)
+    if (created.length > 0) await db.tags.bulkAdd(created)
 
     if (editingBarcode.value) {
         await db.barcodes.update(editingBarcode.value.id, {
@@ -98,23 +98,23 @@ const handleDeleteBarcode = async (_event: Event, id: string) => {
     await loadData()
 }
 
-// ─── Category CRUD handlers ─────────────────────────────────────────────────
-const handleAddCat = async (name: string) => {
-    const cat: Category = { id: uuidv4(), name }
-    await db.categories.add(cat)
+// ─── Tag CRUD handlers ─────────────────────────────────────────────────
+const handleAddTag = async (name: string) => {
+    const tag: Tag = { id: uuidv4(), name }
+    await db.tags.add(tag)
     await loadData()
 }
 
-const handleUpdateCat = async (id: string, name: string) => {
-    await db.categories.update(id, { name })
+const handleUpdateTag = async (id: string, name: string) => {
+    await db.tags.update(id, { name })
     await loadData()
 }
 
-const handleDeleteCat = async (cat: Category) => {
-    await deleteTag(cat.id)
+const handleDeleteTag = async (tag: Tag) => {
+    await deleteTag(tag.id)
     await loadData()
 
-    if (filterCategory.value === cat.id) filterCategory.value = 'all'
+    if (filterTag.value === tag.id) filterTag.value = 'all'
 }
 
 onMounted(loadData)
@@ -134,14 +134,14 @@ onMounted(loadData)
                 <PlusIcon class="w-10 h-10" />
             </button>
             <button
-                ref="showCatModalButton"
+                ref="showTagModalButton"
                 type="button"
                 class="btn-secondary__button btn-round btn-round--sm"
                 aria-label="Manage tags"
                 title="Manage Tags"
-                @click="showCatModal = true"
+                @click="showTagModal = true"
             >
-                <ListBulletIcon class="w-6 h-6" />
+                <TagIcon class="w-6 h-6" />
             </button>
             <button
                 ref="showSettingsModalButton"
@@ -155,7 +155,7 @@ onMounted(loadData)
         </template>
 
         <template #tabs>
-            <CategoryTabs v-model="filterCategory" :categories="categories" />
+            <TagTabs v-model="filterTag" :tags="tags" />
         </template>
 
         <div class="flex flex-col gap-6 justify-center">
@@ -173,8 +173,8 @@ onMounted(loadData)
             v-model:visible="showBarcodeModal"
             :editing-barcode="editingBarcode"
             :types="types"
-            :categories="categories"
-            :initial-category-id="filterCategory !== 'all' ? filterCategory : ''"
+            :tags="tags"
+            :initial-tag-id="filterTag !== 'all' ? filterTag : ''"
             @save="handleSaveBarcode"
         />
 
@@ -186,13 +186,13 @@ onMounted(loadData)
             :get-type-def="getTypeDef"
         />
 
-        <!-- Category Management Modal -->
-        <CategoryModal
-            v-model:visible="showCatModal"
-            :categories="categories"
-            @add="handleAddCat"
-            @update="handleUpdateCat"
-            @delete="handleDeleteCat"
+        <!-- Tag Management Modal -->
+        <TagModal
+            v-model:visible="showTagModal"
+            :tags="tags"
+            @add="handleAddTag"
+            @update="handleUpdateTag"
+            @delete="handleDeleteTag"
         />
 
         <SettingsModal

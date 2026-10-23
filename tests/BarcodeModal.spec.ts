@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { mount, type VueWrapper } from '@vue/test-utils';
 import { nextTick } from 'vue';
 import BarcodeModal from '../src/components/BarcodeModal.vue';
-import type { Barcode, Category } from '../src/db';
+import type { Barcode, Tag } from '../src/db';
 import { setupUI } from '../src/setupUI';
 
 describe('BarcodeModal.vue', () => {
@@ -15,16 +15,16 @@ describe('BarcodeModal.vue', () => {
     { label: 'EAN-13', value: 'ean13', bcid: 'ean13' },
   ];
 
-  const categories: Category[] = [
-    { id: 'cat-1', name: 'Work' },
-    { id: 'cat-2', name: 'Personal' },
+  const tags: Tag[] = [
+    { id: 'tag-1', name: 'Work' },
+    { id: 'tag-2', name: 'Personal' },
   ];
 
   const sampleBarcode: Barcode = {
     id: 'b-1',
     type: 'ean13',
     value: '4006381333931',
-    tags: ['cat-2'],
+    tags: ['tag-2'],
     createdAt: 100,
   };
 
@@ -38,8 +38,8 @@ describe('BarcodeModal.vue', () => {
         visible: true,
         editingBarcode: null,
         types,
-        categories,
-        initialCategoryId: '',
+        tags,
+        initialTagId: '',
         ...props,
       },
     });
@@ -82,28 +82,28 @@ describe('BarcodeModal.vue', () => {
     wrapper.emitted('save')?.[0]?.[0] as { type: string; value: string; tags: string[] };
 
   it('renders Create Barcode title when editingBarcode is null', async () => {
-    mountModal({ initialCategoryId: 'cat-1' });
+    mountModal({ initialTagId: 'tag-1' });
 
     await nextTick();
     expect(document.body.textContent).toContain('Create Barcode');
   });
 
   it('renders Edit Barcode title when editingBarcode is provided', async () => {
-    mountModal({ editingBarcode: sampleBarcode, initialCategoryId: 'cat-1' });
+    mountModal({ editingBarcode: sampleBarcode, initialTagId: 'tag-1' });
 
     await nextTick();
     expect(document.body.textContent).toContain('Edit Barcode');
   });
 
   it('pre-selects the active tab tag for a new barcode', async () => {
-    mountModal({ initialCategoryId: 'cat-1' });
+    mountModal({ initialTagId: 'tag-1' });
     await nextTick();
 
     expect(chipNames()).toEqual(['Work']);
   });
 
   it('starts a new barcode with no tags when no tag is active', async () => {
-    mountModal({ initialCategoryId: '' });
+    mountModal({ initialTagId: '' });
     await nextTick();
 
     expect(chipNames()).toEqual([]);
@@ -153,7 +153,7 @@ describe('BarcodeModal.vue', () => {
   });
 
   it('allows saving with zero tags', async () => {
-    const wrapper = mountModal({ initialCategoryId: 'cat-1' });
+    const wrapper = mountModal({ initialTagId: 'tag-1' });
     await nextTick();
 
     (document.querySelector('[aria-label="Remove tag Work"]') as HTMLButtonElement).click();

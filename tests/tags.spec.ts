@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { db, type Category } from '../src/db'
+import { db, type Tag } from '../src/db'
 import { deleteTag, resolveTagIds, tagKey } from '../src/utils/tags'
 
 describe('tags utility', () => {
@@ -11,33 +11,33 @@ describe('tags utility', () => {
 
     describe('resolveTagIds', () => {
         it('reuses an existing tag when the name matches case-insensitively', () => {
-            const known = new Map<string, Category>([['work', { id: 'c1', name: 'Work' }]])
-            const created: Category[] = []
+            const known = new Map<string, Tag>([['work', { id: 'c1', name: 'Work' }]])
+            const created: Tag[] = []
 
             expect(resolveTagIds(['WORK'], known, created)).toEqual(['c1'])
             expect(created).toEqual([])
         })
 
-        it('creates a trimmed tag for an unknown name and remembers it', () => {
-            const known = new Map<string, Category>()
-            const created: Category[] = []
+        it('creates a trimmed, lowercase tag for an unknown name and remembers it', () => {
+            const known = new Map<string, Tag>()
+            const created: Tag[] = []
 
             const ids = resolveTagIds(['  Gym  ', 'gym'], known, created)
 
             expect(created).toHaveLength(1)
-            expect(created[0]?.name).toBe('Gym')
+            expect(created[0]?.name).toBe('gym')
             expect(ids).toEqual([created[0]!.id])
         })
     })
 
     describe('deleteTag', () => {
         beforeEach(async () => {
-            await db.categories.clear()
+            await db.tags.clear()
             await db.barcodes.clear()
         })
 
         it('removes the tag from every barcode that has it and keeps the barcodes', async () => {
-            await db.categories.bulkAdd([
+            await db.tags.bulkAdd([
                 { id: 'keep', name: 'Keep' },
                 { id: 'gone', name: 'Gone' },
             ])
@@ -49,7 +49,7 @@ describe('tags utility', () => {
 
             await deleteTag('gone')
 
-            expect(await db.categories.get('gone')).toBeUndefined()
+            expect(await db.tags.get('gone')).toBeUndefined()
             expect((await db.barcodes.get('b1'))?.tags).toEqual([])
             expect((await db.barcodes.get('b2'))?.tags).toEqual(['keep'])
             expect((await db.barcodes.get('b3'))?.tags).toEqual(['keep'])

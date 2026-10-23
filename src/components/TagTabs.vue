@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import type { Category } from '../db'
+import type { Tag } from '../db'
 
 defineProps<{
-    categories: Category[]
+    tags: Tag[]
     modelValue: string
 }>()
 
@@ -22,7 +22,7 @@ const emit = defineEmits<{
             All
         </button>
         <button
-            v-for="c in categories"
+            v-for="c in tags"
             :key="c.id"
             type="button"
             class="tab__button"

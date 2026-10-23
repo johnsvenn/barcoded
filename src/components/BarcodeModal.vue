@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import type { Barcode, Category } from '../db'
+import type { Barcode, Tag } from '../db'
 import { getValidationError } from '../utils/validation'
 import { tagKey } from '../utils/tags'
 import { CheckCircleIcon, XMarkIcon } from '@heroicons/vue/24/outline'
@@ -9,8 +9,8 @@ const props = defineProps<{
     visible: boolean
     editingBarcode: Barcode | null
     types: Array<{ label: string; value: string; bcid: string }>
-    categories: Category[]
-    initialCategoryId: string
+    tags: Tag[]
+    initialTagId: string
 }>()
 
 const emit = defineEmits<{
@@ -25,7 +25,7 @@ const tagQuery = ref('')
 
 const tagNamesFromIds = (ids: string[]) =>
     ids
-        .map((id) => props.categories.find((c) => c.id === id)?.name)
+        .map((id) => props.tags.find((c) => c.id === id)?.name)
         .filter((name): name is string => !!name)
 
 watch(
@@ -40,7 +40,7 @@ watch(
             } else {
                 barcodeType.value = 'qrcode'
                 selectedTags.value = tagNamesFromIds(
-                    props.initialCategoryId ? [props.initialCategoryId] : [],
+                    props.initialTagId ? [props.initialTagId] : [],
                 )
                 barcodeValue.value = ''
             }
@@ -56,12 +56,12 @@ const isValid = computed(() => !!barcodeValue.value && !validationError.value)
 const newTagName = computed(() => tagQuery.value.trim())
 
 const existingTagFor = (name: string) =>
-    props.categories.find((c) => tagKey(c.name) === tagKey(name))
+    props.tags.find((c) => tagKey(c.name) === tagKey(name))
 
 const isSelected = (name: string) => selectedTags.value.some((t) => tagKey(t) === tagKey(name))
 
 const suggestions = computed(() =>
-    props.categories.filter(
+    props.tags.filter(
         (c) => !isSelected(c.name) && tagKey(c.name).includes(tagKey(tagQuery.value)),
     ),
 )

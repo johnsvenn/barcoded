@@ -75,9 +75,9 @@ const handleImport = async () => {
     try {
         const text = await selectedFile.value.text()
         const existingBarcodes = await db.barcodes.toArray()
-        const existingCategories = await db.categories.toArray()
+        const existingTags = await db.tags.toArray()
 
-        const validation = validateAndParseImport(text, existingBarcodes, existingCategories)
+        const validation = validateAndParseImport(text, existingBarcodes, existingTags)
 
         if (validation.errors.length > 0) {
             errors.value = validation.errors
@@ -85,7 +85,7 @@ const handleImport = async () => {
             return
         }
 
-        const result = await executeImport(validation.validRowsToImport, existingCategories)
+        const result = await executeImport(validation.validRowsToImport, existingTags)
 
         successMessage.value = `Successfully imported ${result.importedCount} barcodes (${validation.skippedDuplicatesCount} duplicates skipped).`
         selectedFile.value = null
@@ -137,7 +137,7 @@ const handleImport = async () => {
                         <p class="text-xs text-slate-500">
                             Upload a CSV file containing barcode data. Required fields:
                             <span class="font-semibold text-slate-700">Code Type</span> (e.g. qrcode, code39, ean13) and
-                            <span class="font-semibold text-slate-700">Value</span>. Category is optional; separate several with semicolons (e.g. Shopping;Work).
+                            <span class="font-semibold text-slate-700">Value</span>. Tag is optional; separate several with semicolons (e.g. Shopping;Work).
                         </p>
                     </div>
 

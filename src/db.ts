@@ -1,6 +1,6 @@
 import Dexie, { type Table } from 'dexie'
 
-export interface Category {
+export interface Tag {
     id: string
     name: string
 }
@@ -19,7 +19,7 @@ interface LegacyBarcode extends Omit<Barcode, 'tags'> {
 }
 
 export class BarcodeDatabase extends Dexie {
-    categories!: Table<Category, string>
+    tags!: Table<Tag, string>
     barcodes!: Table<Barcode, string>
 
     constructor() {
@@ -41,6 +41,15 @@ export class BarcodeDatabase extends Dexie {
                         delete b.categoryId
                     }),
             )
+        this.version(3)
+            .stores({
+                categories: null,
+                tags: 'id, name',
+            })
+            .upgrade(async (tx) => {
+                const rows = await tx.table<Tag>('categories').toArray()
+                await tx.table<Tag>('tags').bulkAdd(rows)
+            })
     }
 }
 

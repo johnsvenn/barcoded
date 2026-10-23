@@ -1,25 +1,25 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
-import CategoryModal from '../src/components/CategoryModal.vue'
-import type { Category } from '../src/db'
+import TagModal from '../src/components/TagModal.vue'
+import type { Tag } from '../src/db'
 
-describe('CategoryModal.vue', () => {
+describe('TagModal.vue', () => {
     beforeEach(() => {
         document.body.innerHTML = ''
     })
 
-    const sampleCategories: Category[] = [
-        { id: 'cat-1', name: 'Work' },
-        { id: 'cat-2', name: 'Personal' },
+    const sampleTags: Tag[] = [
+        { id: 'tag-1', name: 'Work' },
+        { id: 'tag-2', name: 'Personal' },
     ]
 
-    it('renders category list when visible', async () => {
-        mount(CategoryModal, {
+    it('renders tag list when visible', async () => {
+        mount(TagModal, {
             attachTo: document.body,
             props: {
                 visible: true,
-                categories: sampleCategories,
+                tags: sampleTags,
             },
         })
 
@@ -29,11 +29,11 @@ describe('CategoryModal.vue', () => {
     })
 
     it('prompts delete confirmation modal when delete icon is clicked and emits delete on confirm', async () => {
-        const wrapper = mount(CategoryModal, {
+        const wrapper = mount(TagModal, {
             attachTo: document.body,
             props: {
                 visible: true,
-                categories: sampleCategories,
+                tags: sampleTags,
             },
         })
 
@@ -41,7 +41,7 @@ describe('CategoryModal.vue', () => {
         const deleteBtns = document.body.querySelectorAll('button[aria-label="Delete"]')
         expect(deleteBtns.length).toBe(2)
 
-        // Click delete on first category
+        // Click delete on first tag
         ;(deleteBtns[0] as HTMLButtonElement).click()
         await nextTick()
 
@@ -55,6 +55,6 @@ describe('CategoryModal.vue', () => {
         await nextTick()
 
         expect(wrapper.emitted('delete')).toBeTruthy()
-        expect(wrapper.emitted('delete')?.[0]?.[0]).toEqual(sampleCategories[0])
+        expect(wrapper.emitted('delete')?.[0]?.[0]).toEqual(sampleTags[0])
     })
 })

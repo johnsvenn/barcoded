@@ -1,22 +1,22 @@
 import { describe, it, expect } from 'vitest';
 import { mount } from '@vue/test-utils';
-import CategoryTabs from '../src/components/CategoryTabs.vue';
-import type { Category } from '../src/db';
+import TagTabs from '../src/components/TagTabs.vue';
+import type { Tag } from '../src/db';
 import { setupUI } from '../src/setupUI';
 
-describe('CategoryTabs.vue', () => {
-  const categories: Category[] = [
-    { id: 'cat-1', name: 'Work' },
-    { id: 'cat-2', name: 'Personal' },
+describe('TagTabs.vue', () => {
+  const tags: Tag[] = [
+    { id: 'tag-1', name: 'Work' },
+    { id: 'tag-2', name: 'Personal' },
   ];
 
-  it('renders category tab list including All option', () => {
-    const wrapper = mount(CategoryTabs, {
+  it('renders tag tab list including All option', () => {
+    const wrapper = mount(TagTabs, {
       global: {
         plugins: [{ install: setupUI }],
       },
       props: {
-        categories,
+        tags,
         modelValue: 'all',
       },
     });

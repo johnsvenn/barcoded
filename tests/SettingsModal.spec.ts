@@ -11,7 +11,7 @@ describe('SettingsModal.vue', () => {
     beforeEach(async () => {
         document.body.innerHTML = ''
         testDb = new BarcodeDatabase()
-        await testDb.categories.clear()
+        await testDb.tags.clear()
         await testDb.barcodes.clear()
     });
 

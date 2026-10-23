@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid'
-import { db, type Barcode, type Category } from '../db'
+import { db, type Barcode, type Tag } from '../db'
 import { getValidationError } from './validation'
 import { KNOWN_BARCODE_TYPE_VALUES } from '../constants/barcodeTypes'
 import { resolveTagIds, tagKey } from './tags'
@@ -22,7 +22,7 @@ export interface ImportValidationResult {
 }
 
 /**
- * Splits a category cell into tag names, e.g. "Shopping;Work" -> ["Shopping", "Work"].
+ * Splits a tag cell into tag names, e.g. "Shopping;Work" -> ["Shopping", "Work"].
  */
 export const splitTagCell = (cell: string): string[] =>
     cell
@@ -89,7 +89,7 @@ export const parseCsvText = (csvText: string): Array<{ lineNumber: number; field
 export const validateAndParseImport = (
     csvText: string,
     existingBarcodes: Barcode[],
-    existingCategories: Category[],
+    existingTags: Tag[],
 ): ImportValidationResult => {
     const parsedLines = parseCsvText(csvText)
 
@@ -107,7 +107,7 @@ export const validateAndParseImport = (
 
     let typeCol = -1
     let valueCol = -1
-    let categoryCol = -1
+    let tagCol = -1
     let hasHeader = false
 
     const hasTypeHeader = lowerFirstLine.some((f) => ['type', 'bcid', 'format', 'kind'].includes(f))
@@ -117,7 +117,7 @@ export const validateAndParseImport = (
         hasHeader = true
         typeCol = lowerFirstLine.findIndex((f) => ['type', 'bcid', 'format', 'kind'].includes(f))
         valueCol = lowerFirstLine.findIndex((f) => ['value', 'val', 'code', 'data'].includes(f))
-        categoryCol = lowerFirstLine.findIndex((f) => ['category', 'cat', 'group'].includes(f))
+        tagCol = lowerFirstLine.findIndex((f) => ['tag', 'tags', 'category', 'cat', 'group'].includes(f))
     }
 
     const dataLines = hasHeader ? parsedLines.slice(1) : parsedLines
@@ -138,27 +138,27 @@ export const validateAndParseImport = (
 
         let type = ''
         let value = ''
-        let category = ''
+        let tag = ''
 
         if (hasHeader) {
             type = typeCol >= 0 && fields[typeCol] !== undefined ? fields[typeCol]! : ''
             value = valueCol >= 0 && fields[valueCol] !== undefined ? fields[valueCol]! : ''
-            category = categoryCol >= 0 && fields[categoryCol] !== undefined ? fields[categoryCol]! : ''
+            tag = tagCol >= 0 && fields[tagCol] !== undefined ? fields[tagCol]! : ''
         } else {
             // Positional detection logic
             if (fields.length >= 3) {
                 if (KNOWN_BARCODE_TYPE_VALUES.includes(fields[0]!.toLowerCase())) {
                     type = fields[0]!
                     value = fields[1]!
-                    category = fields[2]!
+                    tag = fields[2]!
                 } else if (KNOWN_BARCODE_TYPE_VALUES.includes(fields[1]!.toLowerCase())) {
                     value = fields[0]!
                     type = fields[1]!
-                    category = fields[2]!
+                    tag = fields[2]!
                 } else {
                     value = fields[0]!
                     type = fields[1]!
-                    category = fields[2]!
+                    tag = fields[2]!
                 }
             } else if (fields.length === 2) {
                 if (KNOWN_BARCODE_TYPE_VALUES.includes(fields[0]!.toLowerCase())) {
@@ -201,7 +201,7 @@ export const validateAndParseImport = (
             lineNumber,
             type,
             value,
-            tagNames: splitTagCell(category),
+            tagNames: splitTagCell(tag),
         })
     }
 
@@ -216,7 +216,7 @@ export const validateAndParseImport = (
 
     // Deduplication logic against existing DB records and within CSV rows
     const tagNameById = new Map<string, string>()
-    for (const c of existingCategories) {
+    for (const c of existingTags) {
         tagNameById.set(c.id, c.name)
     }
 
@@ -256,18 +256,18 @@ export const validateAndParseImport = (
  */
 export const executeImport = async (
     validRows: Array<{ type: string; value: string; tagNames: string[] }>,
-    existingCategories: Category[],
-): Promise<{ importedCount: number; newCategoriesCount: number }> => {
+    existingTags: Tag[],
+): Promise<{ importedCount: number; newTagsCount: number }> => {
     if (validRows.length === 0) {
-        return { importedCount: 0, newCategoriesCount: 0 }
+        return { importedCount: 0, newTagsCount: 0 }
     }
 
-    const known = new Map<string, Category>()
-    for (const c of existingCategories) {
+    const known = new Map<string, Tag>()
+    for (const c of existingTags) {
         known.set(tagKey(c.name), c)
     }
 
-    const created: Category[] = []
+    const created: Tag[] = []
     const barcodesToAdd: Barcode[] = validRows.map((row) => ({
         id: uuidv4(),
         type: row.type,
@@ -277,7 +277,7 @@ export const executeImport = async (
     }))
 
     if (created.length > 0) {
-        await db.categories.bulkAdd(created)
+        await db.tags.bulkAdd(created)
     }
 
     if (barcodesToAdd.length > 0) {
@@ -286,6 +286,6 @@ export const executeImport = async (
 
     return {
         importedCount: barcodesToAdd.length,
-        newCategoriesCount: created.length,
+        newTagsCount: created.length,
     }
 }

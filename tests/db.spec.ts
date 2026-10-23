@@ -1,23 +1,23 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import Dexie from 'dexie';
-import { BarcodeDatabase, type Category, type Barcode } from '../src/db';
+import { BarcodeDatabase, type Tag, type Barcode } from '../src/db';
 
 describe('BarcodeDatabase (IndexedDB integration)', () => {
   let testDb: BarcodeDatabase;
 
   beforeEach(async () => {
     testDb = new BarcodeDatabase();
-    await testDb.categories.clear();
+    await testDb.tags.clear();
     await testDb.barcodes.clear();
   });
 
   it('stores and retrieves tags and barcodes correctly', async () => {
-    const cat: Category = { id: 'c1', name: 'Work' };
-    await testDb.categories.add(cat);
+    const tag: Tag = { id: 'c1', name: 'Work' };
+    await testDb.tags.add(tag);
 
-    const retrievedCats = await testDb.categories.toArray();
-    expect(retrievedCats).toHaveLength(1);
-    expect(retrievedCats[0]?.name).toBe('Work');
+    const retrievedTags = await testDb.tags.toArray();
+    expect(retrievedTags).toHaveLength(1);
+    expect(retrievedTags[0]?.name).toBe('Work');
 
     const barcode: Barcode = {
       id: 'b1',
@@ -74,9 +74,9 @@ describe('BarcodeDatabase (IndexedDB integration)', () => {
     expect(remaining).toHaveLength(0);
   });
 
-  describe('schema v2', () => {
-    it('is at version 2 with a multi-entry tags index and no categoryId index', () => {
-      expect(testDb.verno).toBe(2);
+  describe('schema', () => {
+    it('is at version 3 with a multi-entry tags index and no categoryId index', () => {
+      expect(testDb.verno).toBe(3);
 
       const tagsIndex = testDb.barcodes.schema.idxByName['tags'];
       expect(tagsIndex?.multi).toBe(true);
@@ -105,6 +105,22 @@ describe('BarcodeDatabase (IndexedDB integration)', () => {
       expect(row?.value).toBe('LEGACY');
       expect(row?.tags).toEqual([]);
       expect(row).not.toHaveProperty('categoryId');
+      upgraded.close();
+    });
+
+    it('moves v2 categories into the tags table', async () => {
+      await Dexie.delete('BarcodeAppDB');
+
+      const legacy = new Dexie('BarcodeAppDB');
+      legacy.version(2).stores({
+        categories: 'id, name',
+        barcodes: 'id, type, *tags, createdAt',
+      });
+      await legacy.table('categories').add({ id: 'c1', name: 'work' });
+      legacy.close();
+
+      const upgraded = new BarcodeDatabase();
+      expect(await upgraded.tags.toArray()).toEqual([{ id: 'c1', name: 'work' }]);
       upgraded.close();
     });
   });

@@ -1,10 +1,15 @@
 import { v4 as uuidv4 } from 'uuid'
-import { db, type Category } from '../db'
+import { db, type Tag } from '../db'
 
 /**
- * Lookup key for a tag name. Names are trimmed and compared case-insensitively.
+ * Canonical form of a tag name. Tags are stored trimmed and lowercase.
  */
-export const tagKey = (name: string): string => name.trim().toLowerCase()
+export const normaliseTagName = (name: string): string => name.trim().toLowerCase()
+
+/**
+ * Lookup key for a tag name. Names are compared in their normalised form.
+ */
+export const tagKey = (name: string): string => normaliseTagName(name)
 
 /**
  * Maps tag names to tag ids. A name matching a known tag reuses it; any other
@@ -13,14 +18,14 @@ export const tagKey = (name: string): string => name.trim().toLowerCase()
  */
 export const resolveTagIds = (
     names: string[],
-    known: Map<string, Category>,
-    created: Category[],
+    known: Map<string, Tag>,
+    created: Tag[],
 ): string[] => {
     const ids = names.map((name) => {
         const key = tagKey(name)
         let tag = known.get(key)
         if (!tag) {
-            tag = { id: uuidv4(), name: name.trim() }
+            tag = { id: uuidv4(), name: key }
             known.set(key, tag)
             created.push(tag)
         }
@@ -34,8 +39,8 @@ export const resolveTagIds = (
  * Deletes a tag and removes it from every barcode that has it. The barcodes stay.
  */
 export const deleteTag = async (tagId: string): Promise<void> => {
-    await db.transaction('rw', db.categories, db.barcodes, async () => {
-        await db.categories.delete(tagId)
+    await db.transaction('rw', db.tags, db.barcodes, async () => {
+        await db.tags.delete(tagId)
         await db.barcodes
             .where('tags')
             .equals(tagId)

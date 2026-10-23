@@ -16,7 +16,7 @@ describe('BarcodeCard.vue', () => {
     id: 'test-1',
     type: 'qrcode',
     value: 'HELLO-WORLD',
-    tags: ['cat-1'],
+    tags: ['tag-1'],
     createdAt: 1000,
   };
 
