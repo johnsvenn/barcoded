@@ -117,7 +117,9 @@ export const validateAndParseImport = (
         hasHeader = true
         typeCol = lowerFirstLine.findIndex((f) => ['type', 'bcid', 'format', 'kind'].includes(f))
         valueCol = lowerFirstLine.findIndex((f) => ['value', 'val', 'code', 'data'].includes(f))
-        tagCol = lowerFirstLine.findIndex((f) => ['tag', 'tags', 'category', 'cat', 'group'].includes(f))
+        tagCol = lowerFirstLine.findIndex((f) =>
+            ['tag', 'tags', 'category', 'cat', 'group'].includes(f),
+        )
     }
 
     const dataLines = hasHeader ? parsedLines.slice(1) : parsedLines

@@ -123,81 +123,67 @@ onMounted(loadData)
 <template>
     <AppLayout title="Barcoded">
         <template #actions>
-            <button
-                ref="openCreateModalButton"
-                type="button"
-                class="btn-primary__button btn-round btn-round--lg"
-                aria-label="New barcode"
-                title="New Barcode"
-                @click="openCreateModal"
-            >
+            <button ref="openCreateModalButton"
+                    type="button"
+                    class="btn-primary__button btn-round btn-round--lg"
+                    aria-label="New barcode"
+                    title="New Barcode"
+                    @click="openCreateModal">
                 <PlusIcon class="w-10 h-10" />
             </button>
-            <button
-                ref="showTagModalButton"
-                type="button"
-                class="btn-secondary__button btn-round btn-round--sm"
-                aria-label="Manage tags"
-                title="Manage Tags"
-                @click="showTagModal = true"
-            >
+            <button ref="showTagModalButton"
+                    type="button"
+                    class="btn-secondary__button btn-round btn-round--sm"
+                    aria-label="Manage tags"
+                    title="Manage Tags"
+                    @click="showTagModal = true">
                 <TagIcon class="w-6 h-6" />
             </button>
-            <button
-                ref="showSettingsModalButton"
-                type="button"
-                class="btn-secondary__button btn-round btn-round--sm"
-                aria-label="Settings"
-                title="Settings"
-                @click="showSettingsModal = true">
+            <button ref="showSettingsModalButton"
+                    type="button"
+                    class="btn-secondary__button btn-round btn-round--sm"
+                    aria-label="Settings"
+                    title="Settings"
+                    @click="showSettingsModal = true">
                 <AdjustmentsHorizontalIcon class="w-6 h-6" />
             </button>
         </template>
 
         <template #tabs>
-            <TagTabs v-model="filterTag" :tags="tags" />
+            <TagTabs v-model="filterTag"
+                     :tags="tags" />
         </template>
 
         <div class="flex flex-col gap-6 justify-center">
-            <BarcodeGrid
-                :barcodes="filteredBarcodes"
-                :get-type-def="getTypeDef"
-                @edit="openEditModal"
-                @delete="handleDeleteBarcode"
-                @scan="openScanModal"
-            />
+            <BarcodeGrid :barcodes="filteredBarcodes"
+                         :get-type-def="getTypeDef"
+                         @edit="openEditModal"
+                         @delete="handleDeleteBarcode"
+                         @scan="openScanModal"/>
         </div>
 
         <!-- Create / Edit Barcode Modal -->
-        <BarcodeModal
-            v-model:visible="showBarcodeModal"
-            :editing-barcode="editingBarcode"
-            :types="types"
-            :tags="tags"
-            :initial-tag-id="filterTag !== 'all' ? filterTag : ''"
-            @save="handleSaveBarcode"
-        />
+        <BarcodeModal v-model:visible="showBarcodeModal"
+                      :editing-barcode="editingBarcode"
+                      :types="types"
+                      :tags="tags"
+                      :initial-tag-id="filterTag !== 'all' ? filterTag : ''"
+                      @save="handleSaveBarcode"/>
 
         <!-- Scan / View Barcode Modal -->
-        <BarcodeScanModal
-            v-model:visible="showScanModal"
-            v-model:current-index="scanIndex"
-            :barcodes="filteredBarcodes"
-            :get-type-def="getTypeDef"
-        />
+        <BarcodeScanModal v-model:visible="showScanModal"
+                          v-model:current-index="scanIndex"
+                          :barcodes="filteredBarcodes"
+                          :get-type-def="getTypeDef"/>
 
         <!-- Tag Management Modal -->
-        <TagModal
-            v-model:visible="showTagModal"
-            :tags="tags"
-            @add="handleAddTag"
-            @update="handleUpdateTag"
-            @delete="handleDeleteTag"
-        />
+        <TagModal v-model:visible="showTagModal"
+                  :tags="tags"
+                  @add="handleAddTag"
+                  @update="handleUpdateTag"
+                  @delete="handleDeleteTag"/>
 
-        <SettingsModal
-            v-model:visible="showSettingsModal"
-            @imported="loadData"
-        />
+        <SettingsModal v-model:visible="showSettingsModal"
+                       @imported="loadData"/>
     </AppLayout>
 </template>

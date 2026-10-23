@@ -29,42 +29,44 @@
    Change these to retheme the whole UI without touching components.
    ─────────────────────────────────────────────────────────────────────────── */
 :root {
-
-
     /* ── Header ── */
-    --header__bar--bg:              var(--color-teal-600); /* solid colour fallback */
-    --header__bar--bg-image:        linear-gradient(to right, var(--color-teal-600), var(--color-cyan-200)); /* set to 'none' for solid colour */
-    --header__bar--border:          var(--main__body--bg);  /* bottom edge shown when contrast is low */
-    --header__title--color:         var(--color-slate-800);
+    --header__bar--bg: var(--color-teal-600); /* solid colour fallback */
+    --header__bar--bg-image: linear-gradient(
+        to right,
+        var(--color-teal-600),
+        var(--color-cyan-200)
+    ); /* set to 'none' for solid colour */
+    --header__bar--border: var(--main__body--bg); /* bottom edge shown when contrast is low */
+    --header__title--color: var(--color-slate-800);
 
     /* ── Main page body ──
        Should match the active tab colour to create a "selected tab bleeds into page" effect */
-    --main__body--bg:               var(--color-stone-100);
-    --main__body--color:            var(--color-slate-900);
+    --main__body--bg: var(--color-stone-100);
+    --main__body--color: var(--color-slate-900);
 
     /* ── Tabs ── */
-    --tab__button--bg:              var(--color-stone-300);
-    --tab__button--color:           var(--color-slate-500);
-    --tab__button--border:          transparent;
+    --tab__button--bg: var(--color-stone-300);
+    --tab__button--color: var(--color-slate-500);
+    --tab__button--border: transparent;
 
-    --tab__button--hover--bg:       var(--color-stone-200);
-    --tab__button--hover--color:    var(--color-slate-700);
+    --tab__button--hover--bg: var(--color-stone-200);
+    --tab__button--hover--color: var(--color-slate-700);
 
-    --tab__button--active--bg:      var(--main__body--bg);
-    --tab__button--active--color:   var(--main__body--color);
-    --tab__button--active--border:  var(--main__body--bg);
+    --tab__button--active--bg: var(--main__body--bg);
+    --tab__button--active--color: var(--main__body--color);
+    --tab__button--active--border: var(--main__body--bg);
 
     /* ── Action buttons (primary) ── */
-    --btn-primary__button--bg:        var(--color-green-500);
-    --btn-primary__button--color:     white;
-    --btn-primary__button--border:    transparent;
+    --btn-primary__button--bg: var(--color-green-500);
+    --btn-primary__button--color: white;
+    --btn-primary__button--border: transparent;
     --btn-primary__button--hover--bg: var(--color-lime-400);
 
     /* ── Action buttons (secondary / ghost) ── */
-    --btn-secondary__button--bg:           white;
-    --btn-secondary__button--color:        var(--color-slate-600);
-    --btn-secondary__button--border:       var(--color-slate-300);
-    --btn-secondary__button--hover--bg:    var(--color-yellow-300);
+    --btn-secondary__button--bg: white;
+    --btn-secondary__button--color: var(--color-slate-600);
+    --btn-secondary__button--border: var(--color-slate-300);
+    --btn-secondary__button--hover--bg: var(--color-yellow-300);
     --btn-secondary__button--hover--color: var(--color-slate-800);
 }
 
@@ -74,7 +76,6 @@
    rethemeing only requires changing Layer 2 variables.
    ─────────────────────────────────────────────────────────────────────────── */
 @layer components {
-
     /* ── Layout shell ── */
     .app__shell {
         @apply flex flex-col min-h-screen font-sans;
@@ -103,39 +104,41 @@
         /* Hide scrollbar cross-browser */
         scrollbar-width: none;
     }
-    .tab__nav::-webkit-scrollbar { display: none; }
+    .tab__nav::-webkit-scrollbar {
+        display: none;
+    }
 
     /* ── Individual tab button (default / inactive) ── */
     .tab__button {
         @apply px-4 py-2 text-sm font-medium border rounded-t transition-colors whitespace-nowrap;
         background-color: var(--tab__button--bg);
-        color:            var(--tab__button--color);
-        border-color:     var(--tab__button--border);
+        color: var(--tab__button--color);
+        border-color: var(--tab__button--border);
     }
     .tab__button:hover {
         background-color: var(--tab__button--hover--bg);
-        color:            var(--tab__button--hover--color);
+        color: var(--tab__button--hover--color);
     }
 
     /* ── Tab button active state ── */
     .tab__button--active {
         @apply font-semibold;
         background-color: var(--tab__button--active--bg);
-        color:            var(--tab__button--active--color);
-        border-color:     var(--tab__button--active--border);
+        color: var(--tab__button--active--color);
+        border-color: var(--tab__button--active--border);
     }
     /* Active tab should not show a hover effect */
     .tab__button--active:hover {
         background-color: var(--tab__button--active--bg);
-        color:            var(--tab__button--active--color);
+        color: var(--tab__button--active--color);
     }
 
     /* ── Primary action button ── */
     .btn-primary__button {
         @apply inline-flex items-center gap-1.5 px-3 py-1 text-sm font-medium rounded transition-colors;
         background-color: var(--btn-primary__button--bg);
-        color:            var(--btn-primary__button--color);
-        border-color:     var(--btn-primary__button--border);
+        color: var(--btn-primary__button--color);
+        border-color: var(--btn-primary__button--border);
     }
     .btn-primary__button:hover {
         background-color: var(--btn-primary__button--hover--bg);
@@ -145,12 +148,12 @@
     .btn-secondary__button {
         @apply inline-flex items-center gap-1.5 px-3 py-1 text-sm font-medium rounded border transition-colors;
         background-color: var(--btn-secondary__button--bg);
-        color:            var(--btn-secondary__button--color);
-        border-color:     var(--btn-secondary__button--border);
+        color: var(--btn-secondary__button--color);
+        border-color: var(--btn-secondary__button--border);
     }
     .btn-secondary__button:hover {
         background-color: var(--btn-secondary__button--hover--bg);
-        color:            var(--btn-secondary__button--hover--color);
+        color: var(--btn-secondary__button--hover--color);
     }
 
     /* ── Round icon-only button (modifier, combine with a button class above) ── */

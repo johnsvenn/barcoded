@@ -65,14 +65,12 @@ watch(
 <template>
     <div class="bg-white border border-slate-200 rounded flex flex-col overflow-hidden">
         <!-- Card body: barcode meta + canvas (click to open scan view) -->
-        <div
-            class="p-4 flex flex-col gap-3 flex-1 cursor-pointer group"
-            role="button"
-            tabindex="0"
-            aria-label="View barcode"
-            @click="emit('scan', barcode)"
-            @keydown.enter.space.prevent="emit('scan', barcode)"
-        >
+        <div class="p-4 flex flex-col gap-3 flex-1 cursor-pointer group"
+             role="button"
+             tabindex="0"
+             aria-label="View barcode"
+             @click="emit('scan', barcode)"
+             @keydown.enter.space.prevent="emit('scan', barcode)">
             <div class="text-center">
                 <div class="font-semibold text-sm break-all text-slate-800 leading-snug">
                     {{ barcode.value }}
@@ -80,38 +78,31 @@ watch(
                 <div class="text-xs text-slate-500 mt-0.5">{{ typeLabel }}</div>
             </div>
 
-            <div
-                class="flex justify-center items-center p-3 X-bg-slate-50 X-border border-slate-200 rounded transition-opacity"
-            >
-                <canvas ref="canvasRef" class="max-w-full h-auto!"></canvas>
+            <div class="flex justify-center items-center p-3 X-bg-slate-50 X-border border-slate-200 rounded transition-opacity">
+                <canvas ref="canvasRef"
+                        class="max-w-full h-auto!"></canvas>
             </div>
         </div>
 
         <!-- Card footer: action buttons, contained within card -->
         <div class="px-3 py-2 flex items-center justify-between gap-2">
-            <button
-                type="button"
-                aria-label="Edit barcode"
-                class="edit-btn inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-slate-300 bg-white hover:text-slate-800 transition-colors"
-                @click="emit('edit', barcode)"
-            >
+            <button type="button"
+                    aria-label="Edit barcode"
+                    class="edit-btn inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-slate-300 bg-white hover:text-slate-800 transition-colors"
+                    @click="emit('edit', barcode)">
                 <PencilSquareIcon class="w-6 h-6" />
             </button>
-            <button
-                type="button"
-                aria-label="Delete barcode"
-                class="delete-btn inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-slate-300 bg-white hover:text-red-700 transition-colors"
-                @click="openDeleteModal($event)"
-            >
+            <button type="button"
+                    aria-label="Delete barcode"
+                    class="delete-btn inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-slate-300 bg-white hover:text-red-700 transition-colors"
+                    @click="openDeleteModal($event)">
                 <TrashIcon class="w-6 h-6" />
             </button>
         </div>
 
-        <DeleteConfirmModal
-            v-model:visible="showDeleteModal"
-            title="Delete barcode?"
-            description="This action cannot be undone."
-            @confirm="handleConfirmDelete"
-        />
+        <DeleteConfirmModal v-model:visible="showDeleteModal"
+                            title="Delete barcode?"
+                            description="This action cannot be undone."
+                            @confirm="handleConfirmDelete"/>
     </div>
 </template>

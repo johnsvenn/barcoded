@@ -80,18 +80,14 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
 <template>
     <Teleport to="body">
         <Transition name="scan-modal">
-            <div
-                v-if="visible && currentBarcode"
-                class="fixed inset-0 z-60 flex items-center justify-center overflow-hidden bg-white backdrop-blur-sm"
-                @click.self="close"
-            >
+            <div v-if="visible && currentBarcode"
+                 class="fixed inset-0 z-60 flex items-center justify-center overflow-hidden bg-white backdrop-blur-sm"
+                 @click.self="close">
                 <!-- Close button -->
-                <button
-                    type="button"
-                    class="absolute top-5 right-5 flex items-center justify-center w-9 h-9 rounded-full border-none bg-white/10 text-slate-600 cursor-pointer transition-colors hover:bg-white/20 hover:text-slate-800"
-                    aria-label="Close"
-                    @click="close"
-                >
+                <button type="button"
+                        class="absolute top-5 right-5 flex items-center justify-center w-9 h-9 rounded-full border-none bg-white/10 text-slate-600 cursor-pointer transition-colors hover:bg-white/20 hover:text-slate-800"
+                        aria-label="Close"
+                        @click="close">
                     <XMarkIcon class="w-5 h-5" />
                 </button>
 
@@ -104,7 +100,8 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
 
                     <!-- Barcode canvas -->
                     <div class="bg-white rounded-xl p-6 flex items-center justify-center">
-                        <canvas ref="canvasRef" class="block max-w-[calc(100vw-448px)] max-h-[calc(100dvh-448px)] h-auto! w-auto!" />
+                        <canvas ref="canvasRef"
+                                class="block max-w-[calc(100vw-448px)] max-h-[calc(100dvh-448px)] h-auto! w-auto!" />
                     </div>
 
                     <!-- Type label -->
@@ -114,38 +111,30 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
                 </div>
 
                 <!-- Prev chevron -->
-                <button
-                    v-if="hasPrev"
-                    type="button"
-                    class="absolute left-7 top-1/2 -translate-y-1/2 flex items-center justify-center w-11 h-11 rounded-full border border-white/15 bg-white/8 text-slate-600 cursor-pointer transition-colors hover:bg-white/18 hover:border-white/30 hover:text-slate-800"
-                    aria-label="Previous barcode"
-                    @click.stop="prev"
-                >
+                <button v-if="hasPrev"
+                        type="button"
+                        class="absolute left-7 top-1/2 -translate-y-1/2 flex items-center justify-center w-11 h-11 rounded-full border border-white/15 bg-white/8 text-slate-600 cursor-pointer transition-colors hover:bg-white/18 hover:border-white/30 hover:text-slate-800"
+                        aria-label="Previous barcode"
+                        @click.stop="prev">
                     <ChevronLeftIcon class="w-6 h-6" />
                 </button>
 
                 <!-- Next chevron -->
-                <button
-                    v-if="hasNext"
-                    type="button"
-                    class="absolute right-7 top-1/2 -translate-y-1/2 flex items-center justify-center w-11 h-11 rounded-full border border-white/15 bg-white/8 text-slate-600 cursor-pointer transition-colors hover:bg-white/18 hover:border-white/30 hover:text-slate-800"
-                    aria-label="Next barcode"
-                    @click.stop="next"
-                >
+                <button v-if="hasNext"
+                        type="button"
+                        class="absolute right-7 top-1/2 -translate-y-1/2 flex items-center justify-center w-11 h-11 rounded-full border border-white/15 bg-white/8 text-slate-600 cursor-pointer transition-colors hover:bg-white/18 hover:border-white/30 hover:text-slate-800"
+                        aria-label="Next barcode"
+                        @click.stop="next">
                     <ChevronRightIcon class="w-6 h-6" />
                 </button>
 
                 <!-- Pagination dots -->
-                <div
-                    v-if="barcodes.length > 1"
-                    class="absolute bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-1.5"
-                >
-                    <span
-                        v-for="(_, i) in barcodes"
-                        :key="i"
-                        class="w-1.5 h-1.5 rounded-full transition-all duration-200"
-                        :class="i === currentIndex ? 'bg-slate-600 scale-125' : 'bg-slate-600/25'"
-                    />
+                <div v-if="barcodes.length > 1"
+                     class="absolute bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
+                    <span v-for="(_, i) in barcodes"
+                          :key="i"
+                          class="w-1.5 h-1.5 rounded-full transition-all duration-200"
+                          :class="i === currentIndex ? 'bg-slate-600 scale-125' : 'bg-slate-600/25'"/>
                 </div>
             </div>
         </Transition>

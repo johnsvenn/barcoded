@@ -17,21 +17,17 @@ const emit = defineEmits<{
 
 <template>
     <div class="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-5">
-        <BarcodeCard
-            v-for="b in barcodes"
-            :key="b.id"
-            :barcode="b"
-            :type-label="getTypeDef(b.type)?.label ?? b.type"
-            :type-bcid="getTypeDef(b.type)?.bcid ?? b.type"
-            @edit="emit('edit', $event)"
-            @delete="(evt, id) => emit('delete', evt, id)"
-            @scan="emit('scan', $event)"
-        />
+        <BarcodeCard v-for="b in barcodes"
+                     :key="b.id"
+                     :barcode="b"
+                     :type-label="getTypeDef(b.type)?.label ?? b.type"
+                     :type-bcid="getTypeDef(b.type)?.bcid ?? b.type"
+                     @edit="emit('edit', $event)"
+                     @delete="(evt, id) => emit('delete', evt, id)"
+                     @scan="emit('scan', $event)"/>
 
-        <div
-            v-if="barcodes.length === 0"
-            class="col-span-full text-center py-16 px-4 text-slate-500 dark:text-slate-400"
-        >
+        <div v-if="barcodes.length === 0"
+             class="col-span-full text-center py-16 px-4 text-slate-500 dark:text-slate-400">
             <QrCodeIcon class="w-16 h-16 mx-auto mb-4 text-slate-400 dark:text-slate-500" />
             <p class="text-sm font-medium">
                 No barcodes with this tag. Click "+" to create one.
