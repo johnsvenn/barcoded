@@ -11,6 +11,7 @@ import BarcodeScanModal from './components/BarcodeScanModal.vue'
 import SettingsModal from './components/SettingsModal.vue'
 import { ListBulletIcon, PlusIcon, AdjustmentsHorizontalIcon } from '@heroicons/vue/24/outline'
 import { v4 as uuidv4 } from 'uuid'
+import { deleteTag, resolveTagIds, tagKey } from './utils/tags'
 
 // ─── Barcode type definitions ───────────────────────────────────────────────
 const types = ref(BARCODE_TYPES)
@@ -34,7 +35,7 @@ const scanIndex = ref(0)
 const filteredBarcodes = computed(() =>
     filterCategory.value === 'all'
         ? barcodes.value
-        : barcodes.value.filter((b) => b.categoryId === filterCategory.value),
+        : barcodes.value.filter((b) => b.tags.includes(filterCategory.value)),
 )
 
 const openScanModal = (b: Barcode) => {
@@ -50,12 +51,6 @@ const getTypeDef = (value: string) => types.value.find((t) => t.value === value)
 const loadData = async () => {
     barcodes.value = await db.barcodes.orderBy('createdAt').reverse().toArray()
     categories.value = await db.categories.toArray()
-
-    if (categories.value.length === 0) {
-        const defaultCat: Category = { id: uuidv4(), name: 'Uncategorized' }
-        await db.categories.add(defaultCat)
-        categories.value.push(defaultCat)
-    }
 }
 
 // ─── Barcode CRUD handlers ──────────────────────────────────────────────────
@@ -69,19 +64,26 @@ const openEditModal = (b: Barcode) => {
     showBarcodeModal.value = true
 }
 
-const handleSaveBarcode = async (data: { type: string; value: string; categoryId: string }) => {
+const handleSaveBarcode = async (data: { type: string; value: string; tags: string[] }) => {
+    const known = new Map(
+        (await db.categories.toArray()).map((c) => [tagKey(c.name), c]),
+    )
+    const created: Category[] = []
+    const tagIds = resolveTagIds(data.tags, known, created)
+    if (created.length > 0) await db.categories.bulkAdd(created)
+
     if (editingBarcode.value) {
         await db.barcodes.update(editingBarcode.value.id, {
             type: data.type,
             value: data.value,
-            categoryId: data.categoryId,
+            tags: tagIds,
         })
     } else {
         const b: Barcode = {
             id: uuidv4(),
             type: data.type,
             value: data.value,
-            categoryId: data.categoryId,
+            tags: tagIds,
             createdAt: Date.now(),
         }
         await db.barcodes.add(b)
@@ -109,10 +111,7 @@ const handleUpdateCat = async (id: string, name: string) => {
 }
 
 const handleDeleteCat = async (cat: Category) => {
-    await db.categories.delete(cat.id)
-    await loadData()
-    const fallback = categories.value[0]?.id ?? ''
-    await db.barcodes.where('categoryId').equals(cat.id).modify({ categoryId: fallback })
+    await deleteTag(cat.id)
     await loadData()
 
     if (filterCategory.value === cat.id) filterCategory.value = 'all'
@@ -138,8 +137,8 @@ onMounted(loadData)
                 ref="showCatModalButton"
                 type="button"
                 class="btn-secondary__button btn-round btn-round--sm"
-                aria-label="Manage categories"
-                title="Manage Categories"
+                aria-label="Manage tags"
+                title="Manage Tags"
                 @click="showCatModal = true"
             >
                 <ListBulletIcon class="w-6 h-6" />
@@ -175,9 +174,7 @@ onMounted(loadData)
             :editing-barcode="editingBarcode"
             :types="types"
             :categories="categories"
-            :initial-category-id="
-                filterCategory !== 'all' ? filterCategory : (categories[0]?.id ?? '')
-            "
+            :initial-category-id="filterCategory !== 'all' ? filterCategory : ''"
             @save="handleSaveBarcode"
         />
 

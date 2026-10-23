@@ -2,12 +2,13 @@ import { v4 as uuidv4 } from 'uuid'
 import { db, type Barcode, type Category } from '../db'
 import { getValidationError } from './validation'
 import { KNOWN_BARCODE_TYPE_VALUES } from '../constants/barcodeTypes'
+import { resolveTagIds, tagKey } from './tags'
 
 export interface ParsedCsvRow {
     lineNumber: number
     type: string
     value: string
-    category: string
+    tagNames: string[]
 }
 
 export interface ImportValidationResult {
@@ -15,11 +16,25 @@ export interface ImportValidationResult {
     validRowsToImport: Array<{
         type: string
         value: string
-        categoryName: string
+        tagNames: string[]
     }>
     skippedDuplicatesCount: number
 }
 
+/**
+ * Splits a category cell into tag names, e.g. "Shopping;Work" -> ["Shopping", "Work"].
+ */
+export const splitTagCell = (cell: string): string[] =>
+    cell
+        .split(';')
+        .map((name) => name.trim())
+        .filter(Boolean)
+
+/**
+ * Key for a set of tag names. Order and case don't matter.
+ */
+const tagSetKey = (names: string[]): string =>
+    [...new Set(names.map(tagKey))].sort().join(';')
 
 /**
  * Parses a CSV line respecting quoted strings with commas and escaped quotes.
@@ -186,7 +201,7 @@ export const validateAndParseImport = (
             lineNumber,
             type,
             value,
-            category: category.trim() || 'Uncategorized',
+            tagNames: splitTagCell(category),
         })
     }
 
@@ -200,23 +215,23 @@ export const validateAndParseImport = (
     }
 
     // Deduplication logic against existing DB records and within CSV rows
-    const categoryNameById = new Map<string, string>()
+    const tagNameById = new Map<string, string>()
     for (const c of existingCategories) {
-        categoryNameById.set(c.id, c.name)
+        tagNameById.set(c.id, c.name)
     }
 
     const seenKeys = new Set<string>()
     for (const b of existingBarcodes) {
-        const catName = categoryNameById.get(b.categoryId) || 'Uncategorized'
-        const key = `${b.type.toLowerCase()}|||${b.value}|||${catName.trim().toLowerCase()}`
+        const tagNames = b.tags.map((id) => tagNameById.get(id)).filter((n): n is string => !!n)
+        const key = `${b.type.toLowerCase()}|||${b.value}|||${tagSetKey(tagNames)}`
         seenKeys.add(key)
     }
 
-    const validRowsToImport: Array<{ type: string; value: string; categoryName: string }> = []
+    const validRowsToImport: Array<{ type: string; value: string; tagNames: string[] }> = []
     let skippedDuplicatesCount = 0
 
     for (const row of parsedRows) {
-        const key = `${row.type.toLowerCase()}|||${row.value}|||${row.category.toLowerCase()}`
+        const key = `${row.type.toLowerCase()}|||${row.value}|||${tagSetKey(row.tagNames)}`
         if (seenKeys.has(key)) {
             skippedDuplicatesCount++
         } else {
@@ -224,7 +239,7 @@ export const validateAndParseImport = (
             validRowsToImport.push({
                 type: row.type,
                 value: row.value,
-                categoryName: row.category,
+                tagNames: row.tagNames,
             })
         }
     }
@@ -237,50 +252,32 @@ export const validateAndParseImport = (
 }
 
 /**
- * Inserts valid barcode rows and auto-created categories into IndexedDB.
+ * Inserts valid barcode rows and auto-created tags into IndexedDB.
  */
 export const executeImport = async (
-    validRows: Array<{ type: string; value: string; categoryName: string }>,
+    validRows: Array<{ type: string; value: string; tagNames: string[] }>,
     existingCategories: Category[],
 ): Promise<{ importedCount: number; newCategoriesCount: number }> => {
     if (validRows.length === 0) {
         return { importedCount: 0, newCategoriesCount: 0 }
     }
 
-    const categoryMap = new Map<string, Category>()
+    const known = new Map<string, Category>()
     for (const c of existingCategories) {
-        categoryMap.set(c.name.trim().toLowerCase(), c)
+        known.set(tagKey(c.name), c)
     }
 
-    let newCategoriesCount = 0
-    const barcodesToAdd: Barcode[] = []
-    const categoriesToAdd: Category[] = []
+    const created: Category[] = []
+    const barcodesToAdd: Barcode[] = validRows.map((row) => ({
+        id: uuidv4(),
+        type: row.type,
+        value: row.value,
+        tags: resolveTagIds(row.tagNames, known, created),
+        createdAt: Date.now(),
+    }))
 
-    for (const row of validRows) {
-        const catKey = row.categoryName.trim().toLowerCase()
-        let category = categoryMap.get(catKey)
-
-        if (!category) {
-            category = {
-                id: uuidv4(),
-                name: row.categoryName.trim(),
-            }
-            categoryMap.set(catKey, category)
-            categoriesToAdd.push(category)
-            newCategoriesCount++
-        }
-
-        barcodesToAdd.push({
-            id: uuidv4(),
-            type: row.type,
-            value: row.value,
-            categoryId: category.id,
-            createdAt: Date.now(),
-        })
-    }
-
-    if (categoriesToAdd.length > 0) {
-        await db.categories.bulkAdd(categoriesToAdd)
+    if (created.length > 0) {
+        await db.categories.bulkAdd(created)
     }
 
     if (barcodesToAdd.length > 0) {
@@ -289,6 +286,6 @@ export const executeImport = async (
 
     return {
         importedCount: barcodesToAdd.length,
-        newCategoriesCount,
+        newCategoriesCount: created.length,
     }
 }

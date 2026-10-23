@@ -34,7 +34,7 @@ const emit = defineEmits<{
         >
             <QrCodeIcon class="w-16 h-16 mx-auto mb-4 text-slate-400 dark:text-slate-500" />
             <p class="text-sm font-medium">
-                No barcodes in this category. Click "+" to create one.
+                No barcodes with this tag. Click "+" to create one.
             </p>
         </div>
     </div>

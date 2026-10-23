@@ -46,7 +46,7 @@ describe('CategoryModal.vue', () => {
         await nextTick()
 
         // Confirmation modal title should be in body
-        expect(document.body.textContent).toContain('Delete category?')
+        expect(document.body.textContent).toContain('Delete tag?')
 
         // Click confirm in DeleteConfirmModal
         const confirmBtn = document.body.querySelector('.confirm-btn') as HTMLButtonElement

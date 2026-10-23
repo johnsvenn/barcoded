@@ -91,7 +91,7 @@ const close = () => {
                 <div
                     class="flex items-center justify-between px-5 py-3 border-b border-slate-200 bg-slate-50"
                 >
-                    <h2 class="text-base font-semibold text-slate-800">Manage Categories</h2>
+                    <h2 class="text-base font-semibold text-slate-800">Manage Tags</h2>
                     <button
                         type="button"
                         class="text-slate-400 hover:text-slate-600 p-1 rounded transition-colors"
@@ -110,7 +110,7 @@ const close = () => {
                             v-model="newCatName"
                             type="text"
                             class="w-full px-3 py-2.5 border border-slate-300 rounded bg-white text-slate-800 text-sm leading-snug focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            :placeholder="editingCat ? 'Edit name…' : 'New category name…'"
+                            :placeholder="editingCat ? 'Edit name…' : 'New tag name…'"
                             @keyup.enter="saveCat"
                         />
                         <small v-if="catNameError" class="text-xs text-red-500">{{
@@ -132,7 +132,7 @@ const close = () => {
                                 @click="saveCat"
                             >
                                 <PlusIcon class="w-6 h-6" />
-                                {{ editingCat ? 'Save' : 'Add Category' }}
+                                {{ editingCat ? 'Save' : 'Add Tag' }}
                             </button>
                         </div>
                     </div>
@@ -147,7 +147,7 @@ const close = () => {
                             v-if="categories.length === 0"
                             class="text-center py-4 text-sm text-slate-500"
                         >
-                            No categories yet.
+                            No tags yet.
                         </li>
                         <li
                             v-for="cat in categories"
@@ -197,8 +197,8 @@ const close = () => {
 
         <DeleteConfirmModal
             v-model:visible="showDeleteModal"
-            title="Delete category?"
-            description="This action cannot be undone."
+            title="Delete tag?"
+            description="The tag will be removed from every barcode that has it. This action cannot be undone."
             @confirm="handleConfirmDelete"
         />
     </Teleport>

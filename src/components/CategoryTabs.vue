@@ -12,7 +12,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-    <nav class="tab__nav" aria-label="Category tabs">
+    <nav class="tab__nav" aria-label="Tag tabs">
         <button
             type="button"
             class="tab__button"

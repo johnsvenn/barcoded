@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import {
     parseCsvLine,
+    splitTagCell,
     validateAndParseImport,
     executeImport,
 } from '../src/utils/csvImport'
@@ -21,29 +22,38 @@ describe('csvImport utility', () => {
         });
     });
 
+    describe('splitTagCell', () => {
+        it('splits on semicolons, trims, and drops empties', () => {
+            expect(splitTagCell(' Shopping ; Work ;; ')).toEqual(['Shopping', 'Work'])
+        });
+
+        it('returns no tags for an empty cell', () => {
+            expect(splitTagCell('')).toEqual([])
+        });
+    });
+
     describe('validateAndParseImport', () => {
         const categories: Category[] = [
-            { id: 'c1', name: 'Uncategorized' },
+            { id: 'c1', name: 'Work' },
             { id: 'c2', name: 'category 1' },
         ]
 
         const barcodes: Barcode[] = [
-            { id: 'b1', type: 'qrcode', value: 'existing-123', categoryId: 'c1', createdAt: 100 },
+            { id: 'b1', type: 'qrcode', value: 'existing-123', tags: ['c1'], createdAt: 100 },
         ]
 
-        it('defaults category to Uncategorized if not provided', () => {
+        it('imports a row with no category as untagged', () => {
             const csvText = '123, qrcode'
             const result = validateAndParseImport(csvText, barcodes, categories)
 
             expect(result.errors).toEqual([])
             expect(result.skippedDuplicatesCount).toBe(0)
             expect(result.validRowsToImport).toEqual([
-                { type: 'qrcode', value: '123', categoryName: 'Uncategorized' },
+                { type: 'qrcode', value: '123', tagNames: [] },
             ])
         });
 
-        it('correctly handles user prompt examples of duplicates and non-duplicates', () => {
-            // Example 1: 123, qrcode and 123, qrcode are duplicates because they default Uncategorized
+        it('treats untagged duplicates as duplicates of each other', () => {
             const csv1 = '123, qrcode\n123, qrcode'
             const res1 = validateAndParseImport(csv1, [], categories)
             expect(res1.errors).toEqual([])
@@ -66,11 +76,30 @@ describe('csvImport utility', () => {
         });
 
         it('detects duplicates against existing database barcodes', () => {
-            const csvText = 'existing-123, qrcode'
+            const csvText = 'existing-123, qrcode, Work'
             const result = validateAndParseImport(csvText, barcodes, categories)
 
             expect(result.errors).toEqual([])
             expect(result.validRowsToImport).toHaveLength(0)
+            expect(result.skippedDuplicatesCount).toBe(1)
+        });
+
+        it('compares the full tag set when detecting duplicates', () => {
+            // Existing barcode has only "Work"; a row with "Work;Home" is a different tag set
+            const csvText = 'existing-123, qrcode, Work;Home'
+            const result = validateAndParseImport(csvText, barcodes, categories)
+
+            expect(result.skippedDuplicatesCount).toBe(0)
+            expect(result.validRowsToImport).toEqual([
+                { type: 'qrcode', value: 'existing-123', tagNames: ['Work', 'Home'] },
+            ])
+        });
+
+        it('treats tag sets with different order and case as duplicates', () => {
+            const csvText = 'a1, qrcode, Shopping;Work\na1, qrcode, work; SHOPPING'
+            const result = validateAndParseImport(csvText, [], [])
+
+            expect(result.validRowsToImport).toHaveLength(1)
             expect(result.skippedDuplicatesCount).toBe(1)
         });
 
@@ -99,7 +128,17 @@ describe('csvImport utility', () => {
 
             expect(result.errors).toEqual([])
             expect(result.validRowsToImport).toEqual([
-                { type: 'qrcode', value: '999', categoryName: 'Work' },
+                { type: 'qrcode', value: '999', tagNames: ['Work'] },
+            ])
+        });
+
+        it('splits a multi-tag cell into separate tag names', () => {
+            const csvText = 'type,value,category\nqrcode,999,"Shopping;Work"'
+            const result = validateAndParseImport(csvText, [], [])
+
+            expect(result.errors).toEqual([])
+            expect(result.validRowsToImport).toEqual([
+                { type: 'qrcode', value: '999', tagNames: ['Shopping', 'Work'] },
             ])
         });
     });
@@ -113,13 +152,13 @@ describe('csvImport utility', () => {
             await testDb.barcodes.clear()
         });
 
-        it('inserts new categories and barcodes into database', async () => {
-            const initialCats: Category[] = [{ id: 'c1', name: 'Uncategorized' }]
+        it('inserts new tags and barcodes into database', async () => {
+            const initialCats: Category[] = [{ id: 'c1', name: 'Work' }]
             await testDb.categories.add(initialCats[0]!)
 
             const rowsToImport = [
-                { type: 'qrcode', value: 'ABC', categoryName: 'Uncategorized' },
-                { type: 'code39', value: 'XYZ', categoryName: 'New Category' },
+                { type: 'qrcode', value: 'ABC', tagNames: ['Work'] },
+                { type: 'code39', value: 'XYZ', tagNames: ['New Tag'] },
             ]
 
             const result = await executeImport(rowsToImport, initialCats)
@@ -132,7 +171,42 @@ describe('csvImport utility', () => {
 
             const savedCats = await testDb.categories.toArray()
             expect(savedCats).toHaveLength(2)
-            expect(savedCats.map((c) => c.name)).toContain('New Category')
+            expect(savedCats.map((c) => c.name)).toContain('New Tag')
+        });
+
+        it('creates every tag in a multi-tag row and applies all of them', async () => {
+            const result = await executeImport(
+                [{ type: 'qrcode', value: 'M1', tagNames: ['Shopping', 'Work'] }],
+                [],
+            )
+
+            expect(result.newCategoriesCount).toBe(2)
+
+            const tags = await testDb.categories.toArray()
+            const barcode = (await testDb.barcodes.toArray())[0]!
+            const appliedNames = barcode.tags.map((id) => tags.find((t) => t.id === id)?.name)
+            expect(appliedNames.sort()).toEqual(['Shopping', 'Work'])
+        });
+
+        it('imports an untagged row with no tags', async () => {
+            await executeImport([{ type: 'qrcode', value: 'N1', tagNames: [] }], [])
+
+            const barcode = (await testDb.barcodes.toArray())[0]!
+            expect(barcode.tags).toEqual([])
+        });
+
+        it('reuses an existing tag when names differ only by case', async () => {
+            const existing: Category[] = [{ id: 'c1', name: 'Work' }]
+            await testDb.categories.add(existing[0]!)
+
+            const result = await executeImport(
+                [{ type: 'qrcode', value: 'W1', tagNames: ['WORK'] }],
+                existing,
+            )
+
+            expect(result.newCategoriesCount).toBe(0)
+            const barcode = (await testDb.barcodes.toArray())[0]!
+            expect(barcode.tags).toEqual(['c1'])
         });
     });
 });

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { mount } from '@vue/test-utils';
+import { mount, type VueWrapper } from '@vue/test-utils';
 import { nextTick } from 'vue';
 import BarcodeModal from '../src/components/BarcodeModal.vue';
 import type { Barcode, Category } from '../src/db';
@@ -24,11 +24,11 @@ describe('BarcodeModal.vue', () => {
     id: 'b-1',
     type: 'ean13',
     value: '4006381333931',
-    categoryId: 'cat-2',
+    tags: ['cat-2'],
     createdAt: 100,
   };
 
-  it('renders Create Barcode title when editingBarcode is null', async () => {
+  const mountModal = (props: Partial<InstanceType<typeof BarcodeModal>['$props']> = {}) =>
     mount(BarcodeModal, {
       attachTo: document.body,
       global: {
@@ -39,30 +39,128 @@ describe('BarcodeModal.vue', () => {
         editingBarcode: null,
         types,
         categories,
-        initialCategoryId: 'cat-1',
+        initialCategoryId: '',
+        ...props,
       },
     });
+
+  const tagInput = () => document.querySelector('#modal-tag-input') as HTMLInputElement;
+
+  const chipNames = () =>
+    Array.from(document.querySelectorAll('[aria-label^="Remove tag "]')).map((b) =>
+      b.getAttribute('aria-label')!.replace('Remove tag ', ''),
+    );
+
+  const typeTag = async (text: string) => {
+    tagInput().value = text;
+    tagInput().dispatchEvent(new Event('input'));
+    await nextTick();
+  };
+
+  const pressEnterInTagInput = async () => {
+    tagInput().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    await nextTick();
+  };
+
+  const clickButtonWithText = async (text: string) => {
+    const btn = Array.from(document.querySelectorAll('button')).find(
+      (b) => b.textContent?.trim() === text,
+    ) as HTMLButtonElement | undefined;
+    expect(btn, `button "${text}"`).toBeDefined();
+    btn!.click();
+    await nextTick();
+  };
+
+  const fillValue = async (value: string) => {
+    const input = document.querySelector('#modal-value') as HTMLInputElement;
+    input.value = value;
+    input.dispatchEvent(new Event('input'));
+    await nextTick();
+  };
+
+  const savedPayload = (wrapper: VueWrapper) =>
+    wrapper.emitted('save')?.[0]?.[0] as { type: string; value: string; tags: string[] };
+
+  it('renders Create Barcode title when editingBarcode is null', async () => {
+    mountModal({ initialCategoryId: 'cat-1' });
 
     await nextTick();
     expect(document.body.textContent).toContain('Create Barcode');
   });
 
   it('renders Edit Barcode title when editingBarcode is provided', async () => {
-    mount(BarcodeModal, {
-      attachTo: document.body,
-      global: {
-        plugins: [{ install: setupUI }],
-      },
-      props: {
-        visible: true,
-        editingBarcode: sampleBarcode,
-        types,
-        categories,
-        initialCategoryId: 'cat-1',
-      },
-    });
+    mountModal({ editingBarcode: sampleBarcode, initialCategoryId: 'cat-1' });
 
     await nextTick();
     expect(document.body.textContent).toContain('Edit Barcode');
+  });
+
+  it('pre-selects the active tab tag for a new barcode', async () => {
+    mountModal({ initialCategoryId: 'cat-1' });
+    await nextTick();
+
+    expect(chipNames()).toEqual(['Work']);
+  });
+
+  it('starts a new barcode with no tags when no tag is active', async () => {
+    mountModal({ initialCategoryId: '' });
+    await nextTick();
+
+    expect(chipNames()).toEqual([]);
+  });
+
+  it('shows the barcode’s own tags when editing', async () => {
+    mountModal({ editingBarcode: sampleBarcode });
+    await nextTick();
+
+    expect(chipNames()).toEqual(['Personal']);
+  });
+
+  it('creates a new tag on Enter and emits it with the save payload', async () => {
+    const wrapper = mountModal();
+    await nextTick();
+
+    await typeTag('Shopping');
+    await pressEnterInTagInput();
+    await typeTag('  Errands  ');
+    await clickButtonWithText("Create 'Errands'");
+    await fillValue('HELLO');
+    await clickButtonWithText('Create');
+
+    expect(chipNames()).toEqual(['Shopping', 'Errands']);
+    expect(savedPayload(wrapper)).toEqual({ type: 'qrcode', value: 'HELLO', tags: ['Shopping', 'Errands'] });
+  });
+
+  it('matches an existing tag case-insensitively instead of creating a duplicate', async () => {
+    mountModal();
+    await nextTick();
+
+    await typeTag('personal');
+    await pressEnterInTagInput();
+
+    expect(chipNames()).toEqual(['Personal']);
+  });
+
+  it('offers no create option for a name that already exists', async () => {
+    mountModal();
+    await nextTick();
+
+    await typeTag('WORK');
+    const createBtns = Array.from(document.querySelectorAll('button')).filter((b) =>
+      b.textContent?.trim().startsWith("Create '"),
+    );
+    expect(createBtns).toHaveLength(0);
+  });
+
+  it('allows saving with zero tags', async () => {
+    const wrapper = mountModal({ initialCategoryId: 'cat-1' });
+    await nextTick();
+
+    (document.querySelector('[aria-label="Remove tag Work"]') as HTMLButtonElement).click();
+    await nextTick();
+    await fillValue('HELLO');
+    await clickButtonWithText('Create');
+
+    expect(savedPayload(wrapper).tags).toEqual([]);
   });
 });

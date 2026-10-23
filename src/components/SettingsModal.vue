@@ -137,7 +137,7 @@ const handleImport = async () => {
                         <p class="text-xs text-slate-500">
                             Upload a CSV file containing barcode data. Required fields:
                             <span class="font-semibold text-slate-700">Code Type</span> (e.g. qrcode, code39, ean13) and
-                            <span class="font-semibold text-slate-700">Value</span>. Category is optional (defaults to Uncategorized).
+                            <span class="font-semibold text-slate-700">Value</span>. Category is optional; separate several with semicolons (e.g. Shopping;Work).
                         </p>
                     </div>
 
