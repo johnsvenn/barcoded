@@ -1,7 +1,7 @@
-import { globalIgnores } from 'eslint/config'
-import { defineConfigWithVueTs, vueTsConfigs } from '@vue/eslint-config-typescript'
-import pluginVue from 'eslint-plugin-vue'
-import pluginVitest from '@vitest/eslint-plugin'
+import { defineConfigWithVueTs, vueTsConfigs } from '@vue/eslint-config-typescript';
+import { globalIgnores } from 'eslint/config';
+import pluginVitest from '@vitest/eslint-plugin';
+import pluginVue from 'eslint-plugin-vue';
 
 // To allow more languages other than `ts` in `.vue` files, uncomment the following lines:
 // import { configureVueProject } from '@vue/eslint-config-typescript'
@@ -18,6 +18,15 @@ export default defineConfigWithVueTs(
 
   ...pluginVue.configs['flat/essential'],
   vueTsConfigs.recommended,
+
+  {
+    name: 'app/code-style',
+    files: ['**/*.{vue,ts,mts,tsx}'],
+    rules: {
+      semi: ['error', 'always'],
+      'sort-imports': ['error', { ignoreDeclarationSort: false, ignoreCase: true }],
+    },
+  },
 
   {
     name: 'app/vue-html-formatting',
@@ -49,4 +58,4 @@ export default defineConfigWithVueTs(
     files: ['tests/*'],
   },
 
-)
+);

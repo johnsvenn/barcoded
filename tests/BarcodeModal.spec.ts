@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { mount, type VueWrapper } from '@vue/test-utils';
-import { nextTick } from 'vue';
-import BarcodeModal from '../src/components/BarcodeModal.vue';
 import type { Barcode, Tag } from '../src/db';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { mount, type VueWrapper } from '@vue/test-utils';
+import BarcodeModal from '../src/components/BarcodeModal.vue';
+import { nextTick } from 'vue';
 import { setupUI } from '../src/setupUI';
 
 describe('BarcodeModal.vue', () => {
@@ -123,7 +123,7 @@ describe('BarcodeModal.vue', () => {
     await typeTag('Shopping');
     await pressEnterInTagInput();
     await typeTag('  Errands  ');
-    await clickButtonWithText("Create 'Errands'");
+    await pressEnterInTagInput();
     await fillValue('HELLO');
     await clickButtonWithText('Create');
 
@@ -146,10 +146,7 @@ describe('BarcodeModal.vue', () => {
     await nextTick();
 
     await typeTag('WORK');
-    const createBtns = Array.from(document.querySelectorAll('button')).filter((b) =>
-      b.textContent?.trim().startsWith("Create '"),
-    );
-    expect(createBtns).toHaveLength(0);
+    expect(document.querySelector('[data-test="create-option"]')).toBeNull();
   });
 
   it('allows saving with zero tags', async () => {

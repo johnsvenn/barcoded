@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import type { Tag } from '../db'
+import type { Tag } from '../db';
 
 defineProps<{
     tags: Tag[]
     modelValue: string
-}>()
+}>();
 
 const emit = defineEmits<{
     (e: 'update:modelValue', value: string): void
-}>()
+}>();
 </script>
 
 <template>

@@ -1,83 +1,83 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
-import { db, type Barcode, type Tag } from './db'
-import { BARCODE_TYPES } from './constants/barcodeTypes'
-import AppLayout from './components/AppLayout.vue'
-import BarcodeGrid from './components/BarcodeGrid.vue'
-import TagTabs from './components/TagTabs.vue'
-import BarcodeModal from './components/BarcodeModal.vue'
-import TagModal from './components/TagModal.vue'
-import BarcodeScanModal from './components/BarcodeScanModal.vue'
-import SettingsModal from './components/SettingsModal.vue'
-import { TagIcon, PlusIcon, AdjustmentsHorizontalIcon } from '@heroicons/vue/24/outline'
-import { v4 as uuidv4 } from 'uuid'
-import { deleteTag, resolveTagIds, tagKey } from './utils/tags'
+import { AdjustmentsHorizontalIcon, PlusIcon, TagIcon } from '@heroicons/vue/24/outline';
+import { type Barcode, db, type Tag } from './db';
+import { computed, onMounted, ref } from 'vue';
+import { deleteTag, resolveTagIds, tagKey } from './utils/tags';
+import AppLayout from './components/AppLayout.vue';
+import { BARCODE_TYPES } from './constants/barcodeTypes';
+import BarcodeGrid from './components/BarcodeGrid.vue';
+import BarcodeModal from './components/BarcodeModal.vue';
+import BarcodeScanModal from './components/BarcodeScanModal.vue';
+import SettingsModal from './components/SettingsModal.vue';
+import TagModal from './components/TagModal.vue';
+import TagTabs from './components/TagTabs.vue';
+import { v4 as uuidv4 } from 'uuid';
 
 // ─── Barcode type definitions ───────────────────────────────────────────────
-const types = ref(BARCODE_TYPES)
+const types = ref(BARCODE_TYPES);
 
 // ─── State ───────────────────────────────────────────────────────────────────
-const barcodes = ref<Barcode[]>([])
-const tags = ref<Tag[]>([])
-const filterTag = ref('all')
+const barcodes = ref<Barcode[]>([]);
+const tags = ref<Tag[]>([]);
+const filterTag = ref('all');
 
 // Modals state
-const showBarcodeModal = ref(false)
-const editingBarcode = ref<Barcode | null>(null)
-const showTagModal = ref(false)
-const showSettingsModal = ref(false)
+const showBarcodeModal = ref(false);
+const editingBarcode = ref<Barcode | null>(null);
+const showTagModal = ref(false);
+const showSettingsModal = ref(false);
 
 // Scan modal state
-const showScanModal = ref(false)
-const scanIndex = ref(0)
+const showScanModal = ref(false);
+const scanIndex = ref(0);
 
 // ─── Filtered barcodes ──────────────────────────────────────────────────────
 const filteredBarcodes = computed(() =>
     filterTag.value === 'all'
         ? barcodes.value
         : barcodes.value.filter((b) => b.tags.includes(filterTag.value)),
-)
+);
 
 const openScanModal = (b: Barcode) => {
-    const idx = filteredBarcodes.value.findIndex((x) => x.id === b.id)
-    scanIndex.value = idx >= 0 ? idx : 0
-    showScanModal.value = true
-}
+    const idx = filteredBarcodes.value.findIndex((x) => x.id === b.id);
+    scanIndex.value = idx >= 0 ? idx : 0;
+    showScanModal.value = true;
+};
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
-const getTypeDef = (value: string) => types.value.find((t) => t.value === value)
+const getTypeDef = (value: string) => types.value.find((t) => t.value === value);
 
 // ─── Data loading ───────────────────────────────────────────────────────────
 const loadData = async () => {
-    barcodes.value = await db.barcodes.orderBy('createdAt').reverse().toArray()
-    tags.value = await db.tags.toArray()
-}
+    barcodes.value = await db.barcodes.orderBy('createdAt').reverse().toArray();
+    tags.value = await db.tags.toArray();
+};
 
 // ─── Barcode CRUD handlers ──────────────────────────────────────────────────
 const openCreateModal = () => {
-    editingBarcode.value = null
-    showBarcodeModal.value = true
-}
+    editingBarcode.value = null;
+    showBarcodeModal.value = true;
+};
 
 const openEditModal = (b: Barcode) => {
-    editingBarcode.value = b
-    showBarcodeModal.value = true
-}
+    editingBarcode.value = b;
+    showBarcodeModal.value = true;
+};
 
 const handleSaveBarcode = async (data: { type: string; value: string; tags: string[] }) => {
     const known = new Map(
         (await db.tags.toArray()).map((c) => [tagKey(c.name), c]),
-    )
-    const created: Tag[] = []
-    const tagIds = resolveTagIds(data.tags, known, created)
-    if (created.length > 0) await db.tags.bulkAdd(created)
+    );
+    const created: Tag[] = [];
+    const tagIds = resolveTagIds(data.tags, known, created);
+    if (created.length > 0) await db.tags.bulkAdd(created);
 
     if (editingBarcode.value) {
         await db.barcodes.update(editingBarcode.value.id, {
             type: data.type,
             value: data.value,
             tags: tagIds,
-        })
+        });
     } else {
         const b: Barcode = {
             id: uuidv4(),
@@ -85,39 +85,39 @@ const handleSaveBarcode = async (data: { type: string; value: string; tags: stri
             value: data.value,
             tags: tagIds,
             createdAt: Date.now(),
-        }
-        await db.barcodes.add(b)
+        };
+        await db.barcodes.add(b);
     }
 
-    showBarcodeModal.value = false
-    await loadData()
-}
+    showBarcodeModal.value = false;
+    await loadData();
+};
 
 const handleDeleteBarcode = async (_event: Event, id: string) => {
-    await db.barcodes.delete(id)
-    await loadData()
-}
+    await db.barcodes.delete(id);
+    await loadData();
+};
 
 // ─── Tag CRUD handlers ─────────────────────────────────────────────────
 const handleAddTag = async (name: string) => {
-    const tag: Tag = { id: uuidv4(), name }
-    await db.tags.add(tag)
-    await loadData()
-}
+    const tag: Tag = { id: uuidv4(), name };
+    await db.tags.add(tag);
+    await loadData();
+};
 
 const handleUpdateTag = async (id: string, name: string) => {
-    await db.tags.update(id, { name })
-    await loadData()
-}
+    await db.tags.update(id, { name });
+    await loadData();
+};
 
 const handleDeleteTag = async (tag: Tag) => {
-    await deleteTag(tag.id)
-    await loadData()
+    await deleteTag(tag.id);
+    await loadData();
 
-    if (filterTag.value === tag.id) filterTag.value = 'all'
-}
+    if (filterTag.value === tag.id) filterTag.value = 'all';
+};
 
-onMounted(loadData)
+onMounted(loadData);
 </script>
 
 <template>

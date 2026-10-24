@@ -1,18 +1,18 @@
 <script setup lang="ts">
-import type { Barcode } from '../db'
-import BarcodeCard from './BarcodeCard.vue'
-import { QrCodeIcon } from '@heroicons/vue/24/outline'
+import type { Barcode } from '../db';
+import BarcodeCard from './BarcodeCard.vue';
+import { QrCodeIcon } from '@heroicons/vue/24/outline';
 
 defineProps<{
     barcodes: Barcode[]
     getTypeDef: (type: string) => { label: string; bcid: string } | undefined
-}>()
+}>();
 
 const emit = defineEmits<{
     (e: 'edit', barcode: Barcode): void
     (e: 'delete', event: Event, id: string): void
     (e: 'scan', barcode: Barcode): void
-}>()
+}>();
 </script>
 
 <template>

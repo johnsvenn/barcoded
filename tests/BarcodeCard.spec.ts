@@ -1,8 +1,8 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import type { Barcode } from '../src/db';
+import BarcodeCard from '../src/components/BarcodeCard.vue';
 import { mount } from '@vue/test-utils';
 import { nextTick } from 'vue';
-import BarcodeCard from '../src/components/BarcodeCard.vue';
-import type { Barcode } from '../src/db';
 
 // Mock bwip-js to avoid canvas rendering errors in headless node environment
 vi.mock('bwip-js', () => ({

@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { validateEan13CheckDigit, getValidationError } from '../src/utils/validation';
+import { describe, expect, it } from 'vitest';
+import { getValidationError, validateEan13CheckDigit } from '../src/utils/validation';
 
 describe('Validation Utilities', () => {
     describe('validateEan13CheckDigit', () => {

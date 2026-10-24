@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { type Barcode, BarcodeDatabase, type Tag } from '../src/db';
+import { beforeEach, describe, expect, it } from 'vitest';
 import Dexie from 'dexie';
-import { BarcodeDatabase, type Tag, type Barcode } from '../src/db';
 
 describe('BarcodeDatabase (IndexedDB integration)', () => {
   let testDb: BarcodeDatabase;

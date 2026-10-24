@@ -1,4 +1,4 @@
-import Dexie, { type Table } from 'dexie'
+import Dexie, { type Table } from 'dexie';
 
 export interface Tag {
     id: string
@@ -19,15 +19,15 @@ interface LegacyBarcode extends Omit<Barcode, 'tags'> {
 }
 
 export class BarcodeDatabase extends Dexie {
-    tags!: Table<Tag, string>
-    barcodes!: Table<Barcode, string>
+    tags!: Table<Tag, string>;
+    barcodes!: Table<Barcode, string>;
 
     constructor() {
-        super('BarcodeAppDB')
+        super('BarcodeAppDB');
         this.version(1).stores({
             categories: 'id, name',
             barcodes: 'id, type, categoryId, createdAt',
-        })
+        });
         this.version(2)
             .stores({
                 barcodes: 'id, type, *tags, createdAt',
@@ -37,20 +37,20 @@ export class BarcodeDatabase extends Dexie {
                     .table<LegacyBarcode>('barcodes')
                     .toCollection()
                     .modify((b) => {
-                        b.tags = []
-                        delete b.categoryId
+                        b.tags = [];
+                        delete b.categoryId;
                     }),
-            )
+            );
         this.version(3)
             .stores({
                 categories: null,
                 tags: 'id, name',
             })
             .upgrade(async (tx) => {
-                const rows = await tx.table<Tag>('categories').toArray()
-                await tx.table<Tag>('tags').bulkAdd(rows)
-            })
+                const rows = await tx.table<Tag>('categories').toArray();
+                await tx.table<Tag>('tags').bulkAdd(rows);
+            });
     }
 }
 
-export const db = new BarcodeDatabase()
+export const db = new BarcodeDatabase();

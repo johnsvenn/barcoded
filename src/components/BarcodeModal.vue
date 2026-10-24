@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import type { Barcode, Tag } from '../db'
-import { getValidationError } from '../utils/validation'
-import { tagKey } from '../utils/tags'
-import { CheckCircleIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+import type { Barcode, Tag } from '../db';
+import { CheckCircleIcon, XMarkIcon } from '@heroicons/vue/24/outline';
+import { computed, ref, watch } from 'vue';
+import { getValidationError } from '../utils/validation';
+import TagInput from './TagInput.vue';
+import { tagKey } from '../utils/tags';
+
 
 const props = defineProps<{
     visible: boolean
@@ -11,89 +13,68 @@ const props = defineProps<{
     types: Array<{ label: string; value: string; bcid: string }>
     tags: Tag[]
     initialTagId: string
-}>()
+}>();
 
 const emit = defineEmits<{
     (e: 'update:visible', value: boolean): void
     (e: 'save', data: { type: string; value: string; tags: string[] }): void
-}>()
+}>();
 
-const barcodeType = ref('qrcode')
-const barcodeValue = ref('')
-const selectedTags = ref<string[]>([])
-const tagQuery = ref('')
+const barcodeType = ref('qrcode');
+const barcodeValue = ref('');
+const selectedTags = ref<string[]>([]);
 
 const tagNamesFromIds = (ids: string[]) =>
     ids
         .map((id) => props.tags.find((c) => c.id === id)?.name)
-        .filter((name): name is string => !!name)
+        .filter((name): name is string => !!name);
 
 watch(
     () => props.visible,
     (isVis) => {
         if (isVis) {
-            tagQuery.value = ''
             if (props.editingBarcode) {
-                barcodeType.value = props.editingBarcode.type
-                selectedTags.value = tagNamesFromIds(props.editingBarcode.tags)
-                barcodeValue.value = props.editingBarcode.value
+                barcodeType.value = props.editingBarcode.type;
+                selectedTags.value = tagNamesFromIds(props.editingBarcode.tags);
+                barcodeValue.value = props.editingBarcode.value;
             } else {
-                barcodeType.value = 'qrcode'
+                barcodeType.value = 'qrcode';
                 selectedTags.value = tagNamesFromIds(
                     props.initialTagId ? [props.initialTagId] : [],
-                )
-                barcodeValue.value = ''
+                );
+                barcodeValue.value = '';
             }
         }
     },
     { immediate: true },
-)
+);
 
-const validationError = computed(() => getValidationError(barcodeType.value, barcodeValue.value))
+const validationError = computed(() => getValidationError(barcodeType.value, barcodeValue.value));
 
-const isValid = computed(() => !!barcodeValue.value && !validationError.value)
+const isValid = computed(() => !!barcodeValue.value && !validationError.value);
 
-const newTagName = computed(() => tagQuery.value.trim())
-
-const existingTagFor = (name: string) =>
-    props.tags.find((c) => tagKey(c.name) === tagKey(name))
-
-const isSelected = (name: string) => selectedTags.value.some((t) => tagKey(t) === tagKey(name))
-
-const suggestions = computed(() =>
-    props.tags.filter(
-        (c) => !isSelected(c.name) && tagKey(c.name).includes(tagKey(tagQuery.value)),
-    ),
-)
-
-const canCreate = computed(() => !!newTagName.value && !existingTagFor(newTagName.value))
+const isSelected = (name: string) => selectedTags.value.some((t) => tagKey(t) === tagKey(name));
 
 const addTag = (name: string) => {
-    if (!isSelected(name)) selectedTags.value.push(name)
-    tagQuery.value = ''
-}
+    if (!isSelected(name)) selectedTags.value.push(name);
+};
 
 const removeTag = (name: string) => {
-    selectedTags.value = selectedTags.value.filter((t) => tagKey(t) !== tagKey(name))
-}
-
-const submitTagQuery = () => {
-    if (!newTagName.value) return
-    addTag(existingTagFor(newTagName.value)?.name ?? newTagName.value)
-}
+    selectedTags.value = selectedTags.value.filter((t) => tagKey(t) !== tagKey(name));
+};
 
 const handleSave = () => {
-    if (!isValid.value) return
+    if (!isValid.value) return;
     emit('save', {
         type: barcodeType.value,
         value: barcodeValue.value,
         tags: [...selectedTags.value],
-    })
-}
+    });
+};
 
 const close = () => {
-    emit('update:visible', false)
-}
+    emit('update:visible', false);
+};
 </script>
 
 <template>
@@ -134,42 +115,14 @@ const close = () => {
 
                     <div class="flex flex-col gap-1">
                         <label for="modal-tag-input"
-                               class="text-sm font-medium text-slate-700">Tags</label>
-                        <div class="flex flex-wrap items-center gap-1.5 w-full px-2 py-1.5 border border-slate-300 rounded bg-white focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
-                            <span v-for="name in selectedTags"
-                                  :key="name"
-                                  class="inline-flex items-center gap-1 pl-2 pr-1 py-0.5 text-xs font-medium text-blue-800 bg-blue-50 border border-blue-200 rounded">
-                                {{ name }}
-                                <button type="button"
-                                        class="p-0.5 rounded text-blue-600 hover:text-blue-900"
-                                        :aria-label="`Remove tag ${name}`"
-                                        @click="removeTag(name)">
-                                    <XMarkIcon class="w-3 h-3" />
-                                </button>
-                            </span>
-                            <input id="modal-tag-input"
-                                   v-model="tagQuery"
-                                   type="text"
-                                   class="flex-1 min-w-24 py-1 text-sm text-slate-800 bg-transparent focus:outline-none"
-                                   placeholder="Find or create a tag"
-                                   @keydown.enter.prevent="submitTagQuery"/>
-                        </div>
-                        <div v-if="suggestions.length > 0 || canCreate"
-                             class="flex flex-wrap gap-1.5 pt-1">
-                            <button v-for="tag in suggestions"
-                                    :key="tag.id"
-                                    type="button"
-                                    class="px-2 py-0.5 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded hover:bg-slate-100 transition-colors"
-                                    @click="addTag(tag.name)">
-                                {{ tag.name }}
-                            </button>
-                            <button v-if="canCreate"
-                                    type="button"
-                                    class="px-2 py-0.5 text-xs font-medium text-green-700 bg-green-50 border border-green-300 rounded hover:bg-green-100 transition-colors"
-                                    @click="addTag(newTagName)">
-                                Create '{{ newTagName }}'
-                            </button>
-                        </div>
+                               class="text-sm font-medium text-slate-700">
+                            Tags
+                        </label>
+                        <TagInput input-id="modal-tag-input"
+                                  :selected-tags="selectedTags"
+                                  :tags="tags"
+                                  @add-tag="addTag"
+                                  @remove-tag="removeTag" />
                     </div>
 
                     <div class="flex flex-col gap-1">

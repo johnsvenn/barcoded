@@ -1,6 +1,6 @@
-import { describe, it, expect, vi } from 'vitest';
-import { mount } from '@vue/test-utils';
+import { describe, expect, it, vi } from 'vitest';
 import App from '../src/App.vue';
+import { mount } from '@vue/test-utils';
 import { setupUI } from '../src/setupUI';
 
 vi.mock('bwip-js', () => ({

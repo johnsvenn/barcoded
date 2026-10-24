@@ -1,38 +1,38 @@
 <script setup lang="ts">
-import { onMounted, watch, nextTick, ref } from 'vue'
-import type { Barcode } from '../db'
-import bwipjs from 'bwip-js'
-import { TrashIcon, PencilSquareIcon } from '@heroicons/vue/24/outline'
-import DeleteConfirmModal from './DeleteConfirmModal.vue'
+import { nextTick, onMounted, ref, watch } from 'vue';
+import { PencilSquareIcon, TrashIcon } from '@heroicons/vue/24/outline';
+import type { Barcode } from '../db';
+import bwipjs from 'bwip-js';
+import DeleteConfirmModal from './DeleteConfirmModal.vue';
 
 const props = defineProps<{
     barcode: Barcode
     typeLabel: string
     typeBcid: string
-}>()
+}>();
 
 const emit = defineEmits<{
     (e: 'edit', barcode: Barcode): void
     (e: 'delete', event: Event, id: string): void
     (e: 'scan', barcode: Barcode): void
-}>()
+}>();
 
-const canvasRef = ref<HTMLCanvasElement | null>(null)
-const showDeleteModal = ref(false)
-const lastDeleteEvent = ref<Event | null>(null)
+const canvasRef = ref<HTMLCanvasElement | null>(null);
+const showDeleteModal = ref(false);
+const lastDeleteEvent = ref<Event | null>(null);
 
 const openDeleteModal = (event: Event) => {
-    lastDeleteEvent.value = event
-    showDeleteModal.value = true
-}
+    lastDeleteEvent.value = event;
+    showDeleteModal.value = true;
+};
 
 const handleConfirmDelete = () => {
-    const event = lastDeleteEvent.value || new CustomEvent('delete')
-    emit('delete', event, props.barcode.id)
-}
+    const event = lastDeleteEvent.value || new CustomEvent('delete');
+    emit('delete', event, props.barcode.id);
+};
 
 const renderBarcode = () => {
-    if (!canvasRef.value) return
+    if (!canvasRef.value) return;
 
     const options: bwipjs.RenderOptions = {
         bcid: props.typeBcid,
@@ -41,25 +41,25 @@ const renderBarcode = () => {
         includetext: true,
         textxalign: 'center',
         ...(props.barcode.type !== 'qrcode' ? { height: 10 } : {}),
-    }
+    };
 
     try {
-        bwipjs.toCanvas(canvasRef.value, options)
+        bwipjs.toCanvas(canvasRef.value, options);
     } catch (err) {
-        console.error(`bwip-js error for barcode ${props.barcode.id}:`, err)
+        console.error(`bwip-js error for barcode ${props.barcode.id}:`, err);
     }
-}
+};
 
 onMounted(() => {
-    nextTick(renderBarcode)
-})
+    nextTick(renderBarcode);
+});
 
 watch(
     () => [props.barcode.value, props.barcode.type, props.typeBcid],
     () => {
-        nextTick(renderBarcode)
+        nextTick(renderBarcode);
     },
-)
+);
 </script>
 
 <template>

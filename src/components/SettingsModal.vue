@@ -1,107 +1,107 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
 import {
-    XMarkIcon,
     ArrowUpTrayIcon,
+    CheckCircleIcon,
     DocumentTextIcon,
     ExclamationTriangleIcon,
-    CheckCircleIcon,
-} from '@heroicons/vue/24/outline'
-import { db } from '../db'
-import { validateAndParseImport, executeImport } from '../utils/csvImport'
+    XMarkIcon,
+} from '@heroicons/vue/24/outline';
+import { executeImport, validateAndParseImport } from '../utils/csvImport';
+import { ref, watch } from 'vue';
+import { db } from '../db';
 
 const props = defineProps<{
     visible: boolean
-}>()
+}>();
 
 const emit = defineEmits<{
     (e: 'update:visible', value: boolean): void
     (e: 'imported'): void
-}>()
+}>();
 
-const selectedFile = ref<File | null>(null)
-const isUploading = ref(false)
-const errors = ref<string[]>([])
-const successMessage = ref('')
-const fileInputRef = ref<HTMLInputElement | null>(null)
+const selectedFile = ref<File | null>(null);
+const isUploading = ref(false);
+const errors = ref<string[]>([]);
+const successMessage = ref('');
+const fileInputRef = ref<HTMLInputElement | null>(null);
 
 watch(
     () => props.visible,
     (isVis) => {
         if (!isVis) {
-            resetState()
+            resetState();
         }
     },
-)
+);
 
 const resetState = () => {
-    selectedFile.value = null
-    isUploading.value = false
-    errors.value = []
-    successMessage.value = ''
+    selectedFile.value = null;
+    isUploading.value = false;
+    errors.value = [];
+    successMessage.value = '';
     if (fileInputRef.value) {
-        fileInputRef.value.value = ''
+        fileInputRef.value.value = '';
     }
-}
+};
 
 const close = () => {
-    emit('update:visible', false)
-}
+    emit('update:visible', false);
+};
 
 const triggerFileInput = () => {
-    fileInputRef.value?.click()
-}
+    fileInputRef.value?.click();
+};
 
 const onFileSelected = (event: Event) => {
-    const input = event.target as HTMLInputElement
-    errors.value = []
-    successMessage.value = ''
+    const input = event.target as HTMLInputElement;
+    errors.value = [];
+    successMessage.value = '';
 
     if (input.files && input.files.length > 0) {
-        const file = input.files[0]
+        const file = input.files[0];
         if (file) {
-            selectedFile.value = file
+            selectedFile.value = file;
         }
     }
-}
+};
 
 const handleImport = async () => {
-    if (!selectedFile.value) return
+    if (!selectedFile.value) return;
 
-    isUploading.value = true
-    errors.value = []
-    successMessage.value = ''
+    isUploading.value = true;
+    errors.value = [];
+    successMessage.value = '';
 
     try {
-        const text = await selectedFile.value.text()
-        const existingBarcodes = await db.barcodes.toArray()
-        const existingTags = await db.tags.toArray()
+        const text = await selectedFile.value.text();
+        const existingBarcodes = await db.barcodes.toArray();
+        const existingTags = await db.tags.toArray();
 
-        const validation = validateAndParseImport(text, existingBarcodes, existingTags)
+        const validation = validateAndParseImport(text, existingBarcodes, existingTags);
 
         if (validation.errors.length > 0) {
-            errors.value = validation.errors
-            isUploading.value = false
-            return
+            errors.value = validation.errors;
+            isUploading.value = false;
+            return;
         }
 
-        const result = await executeImport(validation.validRowsToImport, existingTags)
+        const result = await executeImport(validation.validRowsToImport, existingTags);
 
-        successMessage.value = `Successfully imported ${result.importedCount} barcodes (${validation.skippedDuplicatesCount} duplicates skipped).`
-        selectedFile.value = null
+        successMessage.value = `Successfully imported ${result.importedCount} barcodes (${validation.skippedDuplicatesCount} duplicates skipped).`;
+        selectedFile.value = null;
         if (fileInputRef.value) {
-            fileInputRef.value.value = ''
+            fileInputRef.value.value = '';
         }
 
-        emit('imported')
+        emit('imported');
     } catch (err) {
         errors.value = [
             `Failed to read or import file: ${err instanceof Error ? err.message : String(err)}`,
-        ]
+        ];
     } finally {
-        isUploading.value = false
+        isUploading.value = false;
     }
-}
+};
 </script>
 
 <template>

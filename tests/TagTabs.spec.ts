@@ -1,8 +1,8 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { mount } from '@vue/test-utils';
-import TagTabs from '../src/components/TagTabs.vue';
-import type { Tag } from '../src/db';
 import { setupUI } from '../src/setupUI';
+import type { Tag } from '../src/db';
+import TagTabs from '../src/components/TagTabs.vue';
 
 describe('TagTabs.vue', () => {
   const tags: Tag[] = [

@@ -1,43 +1,43 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, nextTick, computed } from 'vue'
-import type { Barcode } from '../db'
-import bwipjs from 'bwip-js'
-import { ChevronLeftIcon, ChevronRightIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+import { ChevronLeftIcon, ChevronRightIcon, XMarkIcon } from '@heroicons/vue/24/outline';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import type { Barcode } from '../db';
+import bwipjs from 'bwip-js';
 
 const props = defineProps<{
     visible: boolean
     barcodes: Barcode[]
     currentIndex: number
     getTypeDef: (type: string) => { label: string; bcid: string } | undefined
-}>()
+}>();
 
 const emit = defineEmits<{
     (e: 'update:visible', value: boolean): void
     (e: 'update:currentIndex', value: number): void
-}>()
+}>();
 
-const canvasRef = ref<HTMLCanvasElement | null>(null)
+const canvasRef = ref<HTMLCanvasElement | null>(null);
 
-const currentBarcode = computed(() => props.barcodes[props.currentIndex] ?? null)
+const currentBarcode = computed(() => props.barcodes[props.currentIndex] ?? null);
 const currentTypeLabel = computed(
     () => props.getTypeDef(currentBarcode.value?.type ?? '')?.label ?? currentBarcode.value?.type ?? '',
-)
+);
 
-const hasPrev = computed(() => props.currentIndex > 0)
-const hasNext = computed(() => props.currentIndex < props.barcodes.length - 1)
+const hasPrev = computed(() => props.currentIndex > 0);
+const hasNext = computed(() => props.currentIndex < props.barcodes.length - 1);
 
-const close = () => emit('update:visible', false)
+const close = () => emit('update:visible', false);
 const prev = () => {
-    if (hasPrev.value) emit('update:currentIndex', props.currentIndex - 1)
-}
+    if (hasPrev.value) emit('update:currentIndex', props.currentIndex - 1);
+};
 const next = () => {
-    if (hasNext.value) emit('update:currentIndex', props.currentIndex + 1)
-}
+    if (hasNext.value) emit('update:currentIndex', props.currentIndex + 1);
+};
 
 const renderBarcode = () => {
-    if (!canvasRef.value || !currentBarcode.value) return
-    const typeDef = props.getTypeDef(currentBarcode.value.type)
-    const bcid = typeDef?.bcid ?? currentBarcode.value.type
+    if (!canvasRef.value || !currentBarcode.value) return;
+    const typeDef = props.getTypeDef(currentBarcode.value.type);
+    const bcid = typeDef?.bcid ?? currentBarcode.value.type;
 
     const options: bwipjs.RenderOptions = {
         bcid,
@@ -45,36 +45,36 @@ const renderBarcode = () => {
         scale: 5,
         includetext: false,
         ...(currentBarcode.value.type !== 'qrcode' ? { height: 20 } : {}),
-    }
+    };
 
     try {
-        bwipjs.toCanvas(canvasRef.value, options)
+        bwipjs.toCanvas(canvasRef.value, options);
     } catch (err) {
-        console.error('bwip-js scan modal error:', err)
+        console.error('bwip-js scan modal error:', err);
     }
-}
+};
 
 watch(
     () => [props.visible, props.currentIndex, props.barcodes],
     () => {
-        if (props.visible) nextTick(renderBarcode)
+        if (props.visible) nextTick(renderBarcode);
     },
     { deep: true },
-)
+);
 
 onMounted(() => {
-    if (props.visible) nextTick(renderBarcode)
-})
+    if (props.visible) nextTick(renderBarcode);
+});
 
 const onKey = (e: KeyboardEvent) => {
-    if (!props.visible) return
-    if (e.key === 'ArrowLeft') { e.preventDefault(); prev() }
-    if (e.key === 'ArrowRight') { e.preventDefault(); next() }
-    if (e.key === 'Escape') close()
-}
+    if (!props.visible) return;
+    if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); next(); }
+    if (e.key === 'Escape') close();
+};
 
-onMounted(() => window.addEventListener('keydown', onKey))
-onUnmounted(() => window.removeEventListener('keydown', onKey))
+onMounted(() => window.addEventListener('keydown', onKey));
+onUnmounted(() => window.removeEventListener('keydown', onKey));
 </script>
 
 <template>

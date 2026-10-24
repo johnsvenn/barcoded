@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
+import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
 
 withDefaults(
     defineProps<{
@@ -15,23 +15,23 @@ withDefaults(
         confirmLabel: 'Delete',
         cancelLabel: 'Cancel',
     },
-)
+);
 
 const emit = defineEmits<{
     (e: 'update:visible', value: boolean): void
     (e: 'confirm'): void
     (e: 'cancel'): void
-}>()
+}>();
 
 const close = () => {
-    emit('update:visible', false)
-    emit('cancel')
-}
+    emit('update:visible', false);
+    emit('cancel');
+};
 
 const handleConfirm = () => {
-    emit('confirm')
-    emit('update:visible', false)
-}
+    emit('confirm');
+    emit('update:visible', false);
+};
 </script>
 
 <template>
