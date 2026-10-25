@@ -7,6 +7,10 @@ describe('tags utility', () => {
         it('trims and lowercases', () => {
             expect(tagKey('  Shopping ')).toBe('shopping');
         });
+
+        it('collapses runs of spaces into one', () => {
+            expect(tagKey('Going   to  Gym')).toBe('going to gym');
+        });
     });
 
     describe('resolveTagIds', () => {

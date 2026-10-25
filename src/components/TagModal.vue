@@ -3,6 +3,7 @@ import { normaliseTagName, tagKey } from '../utils/tags';
 import { PencilSquareIcon, PlusIcon, TrashIcon, XMarkIcon } from '@heroicons/vue/24/outline';
 import { ref, watch } from 'vue';
 import DeleteConfirmModal from './DeleteConfirmModal.vue';
+import { getTagNameError } from '../utils/validation';
 import type { Tag } from '../db';
 
 const props = defineProps<{
@@ -58,8 +59,9 @@ const handleConfirmDelete = () => {
 
 const saveTag = () => {
     const name = normaliseTagName(newTagName.value);
-    if (!name) {
-        tagNameError.value = 'Name is required';
+    const nameError = getTagNameError(name);
+    if (nameError) {
+        tagNameError.value = nameError;
         return;
     }
 

@@ -2,9 +2,10 @@ import { db, type Tag } from '../db';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
- * Canonical form of a tag name. Tags are stored trimmed and lowercase.
+ * Canonical form of a tag name. Tags are stored trimmed, lowercase and with single spaces.
  */
-export const normaliseTagName = (name: string): string => name.trim().toLowerCase();
+export const normaliseTagName = (name: string): string =>
+    name.trim().toLowerCase().replace(/\s+/g, ' ');
 
 /**
  * Lookup key for a tag name. Names are compared in their normalised form.

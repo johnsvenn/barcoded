@@ -1,6 +1,7 @@
 import { type Barcode, BarcodeDatabase, type Tag } from '../src/db';
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
+    buildExportCsv,
     executeImport,
     parseCsvLine,
     splitTagCell,
@@ -132,6 +133,15 @@ describe('csvImport utility', () => {
             ]);
         });
 
+        it('rejects tag names with disallowed characters and names the row', () => {
+            const result = validateAndParseImport('123, qrcode, "Mom\'s;Work"', [], tags);
+
+            expect(result.errors).toEqual([
+                "Row 1: Tag \"Mom's\": Tags can only contain letters a–z, numbers 0–9 and spaces",
+            ]);
+            expect(result.validRowsToImport).toEqual([]);
+        });
+
         it('splits a multi-tag cell into separate tag names', () => {
             const csvText = 'type,value,category\nqrcode,999,"Shopping;Work"';
             const result = validateAndParseImport(csvText, [], []);
@@ -207,6 +217,49 @@ describe('csvImport utility', () => {
             expect(result.newTagsCount).toBe(0);
             const barcode = (await testDb.barcodes.toArray())[0]!;
             expect(barcode.tags).toEqual(['c1']);
+        });
+    });
+
+    describe('buildExportCsv', () => {
+        const tags: Tag[] = [
+            { id: 't1', name: 'shopping' },
+            { id: 't2', name: 'work' },
+        ];
+
+        it('writes a type,value,tags header and one row per barcode', () => {
+            const barcodes: Barcode[] = [
+                { id: 'b1', type: 'qrcode', value: '123', tags: ['t1', 't2'], createdAt: 1 },
+                { id: 'b2', type: 'ean13', value: '4006381333931', tags: [], createdAt: 2 },
+            ];
+
+            expect(buildExportCsv(barcodes, tags)).toBe(
+                'type,value,tags\nqrcode,123,shopping;work\nean13,4006381333931,',
+            );
+        });
+
+        it('quotes values containing commas or quotes', () => {
+            const barcodes: Barcode[] = [
+                { id: 'b1', type: 'qrcode', value: 'a,"b"', tags: [], createdAt: 1 },
+            ];
+
+            expect(buildExportCsv(barcodes, tags)).toBe('type,value,tags\nqrcode,"a,""b""",');
+        });
+
+        it('round-trips through validateAndParseImport', () => {
+            const barcodes: Barcode[] = [
+                { id: 'b1', type: 'qrcode', value: 'a,"b"', tags: ['t1'], createdAt: 1 },
+                { id: 'b2', type: 'code128', value: 'ABC-1', tags: ['t1', 't2'], createdAt: 2 },
+                { id: 'b3', type: 'qrcode', value: 'plain', tags: [], createdAt: 3 },
+            ];
+
+            const result = validateAndParseImport(buildExportCsv(barcodes, tags), [], tags);
+
+            expect(result.errors).toEqual([]);
+            expect(result.validRowsToImport).toEqual([
+                { type: 'qrcode', value: 'a,"b"', tagNames: ['shopping'] },
+                { type: 'code128', value: 'ABC-1', tagNames: ['shopping', 'work'] },
+                { type: 'qrcode', value: 'plain', tagNames: [] },
+            ]);
         });
     });
 });

@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import {
+    ArrowDownTrayIcon,
     ArrowUpTrayIcon,
     CheckCircleIcon,
     DocumentTextIcon,
     ExclamationTriangleIcon,
     XMarkIcon,
 } from '@heroicons/vue/24/outline';
-import { executeImport, validateAndParseImport } from '../utils/csvImport';
+import { buildExportCsv, executeImport, validateAndParseImport } from '../utils/csvImport';
 import { ref, watch } from 'vue';
 import { db } from '../db';
 
@@ -102,6 +103,19 @@ const handleImport = async () => {
         isUploading.value = false;
     }
 };
+
+const exportBarcodes = async () => {
+    const barcodes = await db.barcodes.toArray();
+    const tags = await db.tags.toArray();
+    const csv = buildExportCsv(barcodes, tags);
+
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `barcodes-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+};
 </script>
 
 <template>
@@ -129,7 +143,7 @@ const handleImport = async () => {
                         <p class="text-xs text-slate-500">
                             Upload a CSV file containing barcode data. Required fields:
                             <span class="font-semibold text-slate-700">Code Type</span> (e.g. qrcode, code39, ean13) and
-                            <span class="font-semibold text-slate-700">Value</span>. Tag is optional; separate several with semicolons (e.g. Shopping;Work).
+                            <span class="font-semibold text-slate-700">Value</span>. Tag is optional; separate several with semicolons (e.g. Shopping;Work). Tags may only contain letters a–z, numbers 0–9 and spaces.
                         </p>
                     </div>
 
@@ -151,6 +165,15 @@ const handleImport = async () => {
                                class="text-xs font-semibold text-blue-600 truncate max-w-full">
                                 {{ selectedFile.name }} ({{ (selectedFile.size / 1024).toFixed(1) }} KB)
                             </p>
+                        </div>
+                        <div>
+                            <button type="button"
+                                    class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed rounded transition-colors"
+                                    :disabled="!selectedFile || isUploading"
+                                    @click="handleImport">
+                                <ArrowUpTrayIcon class="w-4 h-4" />
+                                {{ isUploading ? 'Importing...' : 'Upload & Import' }}
+                            </button>
                         </div>
                     </div>
 
@@ -175,6 +198,22 @@ const handleImport = async () => {
                         <CheckCircleIcon class="w-5 h-5 shrink-0 text-green-600" />
                         <span>{{ successMessage }}</span>
                     </div>
+
+                    <!-- Export section -->
+                    <div class="border-t border-slate-200 pt-5 flex flex-col gap-3">
+                        <div>
+                            <h3 class="text-sm font-semibold text-slate-800 mb-1">Export Barcodes (CSV)</h3>
+                            <p class="text-xs text-slate-500">
+                                Download all barcodes as a CSV file in the same format used for import.
+                            </p>
+                        </div>
+                        <button type="button"
+                                class="self-start inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded hover:bg-slate-100 transition-colors"
+                                @click="exportBarcodes">
+                            <ArrowDownTrayIcon class="w-4 h-4" />
+                            Export CSV
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Footer -->
@@ -183,14 +222,6 @@ const handleImport = async () => {
                             class="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded hover:bg-slate-100 transition-colors"
                             @click="close">
                         Close
-                    </button>
-
-                    <button type="button"
-                            class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed rounded transition-colors"
-                            :disabled="!selectedFile || isUploading"
-                            @click="handleImport">
-                        <ArrowUpTrayIcon class="w-4 h-4" />
-                        {{ isUploading ? 'Importing...' : 'Upload & Import' }}
                     </button>
                 </div>
             </div>

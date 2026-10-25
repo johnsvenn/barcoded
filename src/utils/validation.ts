@@ -12,6 +12,18 @@ export const validateEan13CheckDigit = (value: string): boolean => {
 };
 
 /**
+ * Validates a normalised tag name. Only a-z, 0-9 and spaces are allowed.
+ * Returns an error message if invalid, or empty string if valid.
+ */
+export const getTagNameError = (name: string): string => {
+    if (!name) return 'Name is required';
+    if (!/^[a-z0-9 ]+$/.test(name)) {
+        return 'Tags can only contain letters a–z, numbers 0–9 and spaces';
+    }
+    return '';
+};
+
+/**
  * Validates barcode input value based on selected barcode type.
  * Returns an error message if invalid, or empty string if valid.
  */

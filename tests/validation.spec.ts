@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getValidationError, validateEan13CheckDigit } from '../src/utils/validation';
+import { getTagNameError, getValidationError, validateEan13CheckDigit } from '../src/utils/validation';
 
 describe('Validation Utilities', () => {
     describe('validateEan13CheckDigit', () => {
@@ -46,6 +46,23 @@ describe('Validation Utilities', () => {
             expect(getValidationError('code39', 'INVALID@CHAR')).toBe(
                 'Code 39 only supports A–Z, 0–9 and - . $ / + % SPACE'
             );
+        });
+    });
+
+    describe('getTagNameError', () => {
+        it('accepts letters, numbers and spaces', () => {
+            expect(getTagNameError('work 2 go')).toBe('');
+        });
+
+        it('rejects punctuation, symbols and non-ASCII letters', () => {
+            const message = 'Tags can only contain letters a–z, numbers 0–9 and spaces';
+            expect(getTagNameError("mom's")).toBe(message);
+            expect(getTagNameError('a;b')).toBe(message);
+            expect(getTagNameError('café')).toBe(message);
+        });
+
+        it('requires a name', () => {
+            expect(getTagNameError('')).toBe('Name is required');
         });
     });
 });

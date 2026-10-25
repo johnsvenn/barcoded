@@ -1,6 +1,6 @@
 import { type Barcode, db, type Tag } from '../db';
-import { resolveTagIds, tagKey } from './tags';
-import { getValidationError } from './validation';
+import { getTagNameError, getValidationError } from './validation';
+import { normaliseTagName, resolveTagIds, tagKey } from './tags';
 import { KNOWN_BARCODE_TYPE_VALUES } from '../constants/barcodeTypes';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -199,11 +199,19 @@ export const validateAndParseImport = (
             }
         }
 
+        const tagNames = splitTagCell(tag);
+        for (const name of tagNames) {
+            const tagError = getTagNameError(normaliseTagName(name));
+            if (tagError) {
+                errors.push(`Row ${lineNumber}: Tag "${name}": ${tagError}`);
+            }
+        }
+
         parsedRows.push({
             lineNumber,
             type,
             value,
-            tagNames: splitTagCell(tag),
+            tagNames,
         });
     }
 
@@ -290,4 +298,28 @@ export const executeImport = async (
         importedCount: barcodesToAdd.length,
         newTagsCount: created.length,
     };
+};
+
+/**
+ * Wraps a CSV field in quotes when it holds a delimiter, quote or line break.
+ */
+const escapeCsvField = (field: string): string =>
+    /[",\r\n]/.test(field) ? `"${field.replace(/"/g, '""')}"` : field;
+
+/**
+ * Serialises barcodes to CSV in the format validateAndParseImport reads back:
+ * a `type,value,tags` header, with tags joined by semicolons.
+ */
+export const buildExportCsv = (barcodes: Barcode[], tags: Tag[]): string => {
+    const tagNameById = new Map<string, string>();
+    for (const t of tags) {
+        tagNameById.set(t.id, t.name);
+    }
+
+    const rows = barcodes.map((b) => {
+        const tagNames = b.tags.map((id) => tagNameById.get(id)).filter((n): n is string => !!n);
+        return [b.type, b.value, tagNames.join(';')].map(escapeCsvField).join(',');
+    });
+
+    return ['type,value,tags', ...rows].join('\n');
 };

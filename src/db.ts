@@ -18,6 +18,11 @@ interface LegacyBarcode extends Omit<Barcode, 'tags'> {
     categoryId?: string
 }
 
+// Keeps only a-z, 0-9 and single spaces. Mirrors normaliseTagName, which isn't imported
+// here because utils/tags.ts imports this module.
+const cleanTagName = (name: string): string =>
+    name.replace(/[^a-z0-9 ]/gi, '').trim().toLowerCase().replace(/\s+/g, ' ');
+
 export class BarcodeDatabase extends Dexie {
     tags!: Table<Tag, string>;
     barcodes!: Table<Barcode, string>;

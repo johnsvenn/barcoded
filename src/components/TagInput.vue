@@ -1,8 +1,9 @@
 <script lang="ts">
 import { defineComponent, nextTick, type PropType } from 'vue';
+import { normaliseTagName, tagKey } from '../utils/tags';
 import { PlusIcon, XMarkIcon } from '@heroicons/vue/24/outline';
+import { getTagNameError } from '../utils/validation';
 import type { Tag } from '../db';
-import { tagKey } from '../utils/tags';
 
 interface TagOption {
     kind: 'existing' | 'create'
@@ -54,6 +55,11 @@ export default defineComponent({
             return this.query.trim();
         },
 
+        // Why the typed text cannot become a new tag, or empty when it can.
+        queryError(): string {
+            return this.trimmedQuery ? getTagNameError(normaliseTagName(this.trimmedQuery)) : '';
+        },
+
         listboxId(): string {
             return `${this.inputId}-listbox`;
         },
@@ -79,6 +85,7 @@ export default defineComponent({
 
             const canCreate =
                 !!this.trimmedQuery &&
+                !this.queryError &&
                 !this.existingTagFor(this.trimmedQuery) &&
                 !this.isSelected(this.trimmedQuery);
 
@@ -92,6 +99,7 @@ export default defineComponent({
         },
 
         emptyMessage(): string {
+            if (this.queryError) return this.queryError;
             if (this.trimmedQuery) return `‘${this.trimmedQuery}’ is already added.`;
             return this.tags.length ? 'Every existing tag is selected.' : 'No tags yet. Type to create one.';
         },
@@ -140,11 +148,12 @@ export default defineComponent({
 
         // Asks the parent to add a tag. The parent owns the selection, so nothing is stored here.
         requestAdd(name: string): void {
-            const trimmed = name.trim();
-            if (!trimmed) return;
+            const normalised = normaliseTagName(name);
+            // Invalid input stays in the box so the user can see the message and fix it.
+            if (getTagNameError(normalised)) return;
 
             // Reuse the casing of an existing tag so that duplicates are not created.
-            const canonical = this.existingTagFor(trimmed)?.name ?? trimmed;
+            const canonical = this.existingTagFor(normalised)?.name ?? name.trim();
             if (!this.isSelected(canonical)) {
                 this.$emit('addTag', canonical);
             }
