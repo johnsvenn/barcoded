@@ -13,6 +13,7 @@ const props = defineProps<{
     types: Array<{ label: string; value: string; bcid: string }>
     tags: Tag[]
     initialTagId: string
+    defaultType: string
 }>();
 
 const emit = defineEmits<{
@@ -20,7 +21,7 @@ const emit = defineEmits<{
     (e: 'save', data: { type: string; value: string; tags: string[] }): void
 }>();
 
-const barcodeType = ref('qrcode');
+const barcodeType = ref(props.defaultType);
 const barcodeValue = ref('');
 const selectedTags = ref<string[]>([]);
 
@@ -38,7 +39,7 @@ watch(
                 selectedTags.value = tagNamesFromIds(props.editingBarcode.tags);
                 barcodeValue.value = props.editingBarcode.value;
             } else {
-                barcodeType.value = 'qrcode';
+                barcodeType.value = props.defaultType;
                 selectedTags.value = tagNamesFromIds(
                     props.initialTagId ? [props.initialTagId] : [],
                 );

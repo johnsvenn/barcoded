@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { AdjustmentsHorizontalIcon, PlusIcon, TagIcon } from '@heroicons/vue/24/outline';
 import { type Barcode, db, type Tag } from './db';
+import { BARCODE_TYPES, getDefaultBarcodeType } from './constants/barcodeTypes';
 import { computed, onMounted, ref } from 'vue';
 import { deleteTag, resolveTagIds, tagKey } from './utils/tags';
 import AppLayout from './components/AppLayout.vue';
-import { BARCODE_TYPES } from './constants/barcodeTypes';
 import BarcodeGrid from './components/BarcodeGrid.vue';
 import BarcodeModal from './components/BarcodeModal.vue';
 import BarcodeScanModal from './components/BarcodeScanModal.vue';
@@ -15,6 +15,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 // ─── Barcode type definitions ───────────────────────────────────────────────
 const types = ref(BARCODE_TYPES);
+const defaultBarcodeType = ref(getDefaultBarcodeType());
 
 // ─── State ───────────────────────────────────────────────────────────────────
 const barcodes = ref<Barcode[]>([]);
@@ -166,6 +167,7 @@ onMounted(loadData);
         <BarcodeModal v-model:visible="showBarcodeModal"
                       :editing-barcode="editingBarcode"
                       :types="types"
+                      :default-type="defaultBarcodeType"
                       :tags="tags"
                       :initial-tag-id="filterTag !== 'all' ? filterTag : ''"
                       @save="handleSaveBarcode"/>
@@ -184,6 +186,7 @@ onMounted(loadData);
                   @delete="handleDeleteTag"/>
 
         <SettingsModal v-model:visible="showSettingsModal"
-                       @imported="loadData"/>
+                       @imported="loadData"
+                       @default-type-saved="defaultBarcodeType = $event"/>
     </AppLayout>
 </template>

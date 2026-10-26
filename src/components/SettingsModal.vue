@@ -7,6 +7,7 @@ import {
     ExclamationTriangleIcon,
     XMarkIcon,
 } from '@heroicons/vue/24/outline';
+import { BARCODE_TYPES, getDefaultBarcodeType, setDefaultBarcodeType } from '../constants/barcodeTypes';
 import { buildExportCsv, executeImport, validateAndParseImport } from '../utils/csvImport';
 import { ref, watch } from 'vue';
 import { db } from '../db';
@@ -18,6 +19,7 @@ const props = defineProps<{
 const emit = defineEmits<{
     (e: 'update:visible', value: boolean): void
     (e: 'imported'): void
+    (e: 'default-type-saved', value: string): void
 }>();
 
 const selectedFile = ref<File | null>(null);
@@ -25,15 +27,24 @@ const isUploading = ref(false);
 const errors = ref<string[]>([]);
 const successMessage = ref('');
 const fileInputRef = ref<HTMLInputElement | null>(null);
+const selectedDefaultType = ref('');
 
 watch(
     () => props.visible,
     (isVis) => {
         if (!isVis) {
             resetState();
+        } else {
+            selectedDefaultType.value = getDefaultBarcodeType();
         }
     },
 );
+
+const saveDefaultType = () => {
+    setDefaultBarcodeType(selectedDefaultType.value);
+    emit('default-type-saved', selectedDefaultType.value);
+    close();
+};
 
 const resetState = () => {
     selectedFile.value = null;
@@ -138,6 +149,22 @@ const exportBarcodes = async () => {
 
                 <!-- Body -->
                 <div class="p-5 flex flex-col gap-5">
+                    <div class="flex flex-col gap-2">
+                        <h3 class="text-sm font-semibold text-slate-800">Default Barcode Type</h3>
+                        <p class="text-xs text-slate-500">
+                            Type pre-selected when creating a new barcode. Editing keeps each barcode's own type.
+                        </p>
+                        <select id="settings-default-type"
+                                v-model="selectedDefaultType"
+                                class="w-full px-3 py-2.5 border border-slate-300 rounded bg-white text-slate-800 text-sm leading-snug focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option v-for="t in BARCODE_TYPES"
+                                    :key="t.value"
+                                    :value="t.value">
+                                {{ t.label }}
+                            </option>
+                        </select>
+                    </div>
+
                     <div>
                         <h3 class="text-sm font-semibold text-slate-800 mb-1">Import Barcodes (CSV)</h3>
                         <p class="text-xs text-slate-500">
@@ -222,6 +249,12 @@ const exportBarcodes = async () => {
                             class="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded hover:bg-slate-100 transition-colors"
                             @click="close">
                         Close
+                    </button>
+                    <button type="button"
+                            class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-green-500 hover:bg-green-600 rounded transition-colors"
+                            @click="saveDefaultType">
+                        <CheckCircleIcon class="w-4 h-4" />
+                        Save
                     </button>
                 </div>
             </div>

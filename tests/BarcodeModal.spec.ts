@@ -40,6 +40,7 @@ describe('BarcodeModal.vue', () => {
         types,
         tags,
         initialTagId: '',
+        defaultType: 'qrcode',
         ...props,
       },
     });
