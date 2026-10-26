@@ -2,7 +2,7 @@
 import type { Barcode, Tag } from '../db';
 import { CheckCircleIcon, XMarkIcon } from '@heroicons/vue/24/outline';
 import { computed, ref, watch } from 'vue';
-import { getValidationError } from '../utils/validation';
+import { getNoteError, getValidationError, NOTE_MAX_LENGTH } from '../utils/validation';
 import TagInput from './TagInput.vue';
 import { tagKey } from '../utils/tags';
 
@@ -18,11 +18,12 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     (e: 'update:visible', value: boolean): void
-    (e: 'save', data: { type: string; value: string; tags: string[] }): void
+    (e: 'save', data: { type: string; value: string; tags: string[]; note: string }): void
 }>();
 
 const barcodeType = ref(props.defaultType);
 const barcodeValue = ref('');
+const barcodeNote = ref('');
 const selectedTags = ref<string[]>([]);
 
 const tagNamesFromIds = (ids: string[]) =>
@@ -38,12 +39,14 @@ watch(
                 barcodeType.value = props.editingBarcode.type;
                 selectedTags.value = tagNamesFromIds(props.editingBarcode.tags);
                 barcodeValue.value = props.editingBarcode.value;
+                barcodeNote.value = props.editingBarcode.note ?? '';
             } else {
                 barcodeType.value = props.defaultType;
                 selectedTags.value = tagNamesFromIds(
                     props.initialTagId ? [props.initialTagId] : [],
                 );
                 barcodeValue.value = '';
+                barcodeNote.value = '';
             }
         }
     },
@@ -52,7 +55,11 @@ watch(
 
 const validationError = computed(() => getValidationError(barcodeType.value, barcodeValue.value));
 
-const isValid = computed(() => !!barcodeValue.value && !validationError.value);
+const noteError = computed(() => getNoteError(barcodeNote.value));
+
+const isValid = computed(
+    () => !!barcodeValue.value && !validationError.value && !noteError.value,
+);
 
 const isSelected = (name: string) => selectedTags.value.some((t) => tagKey(t) === tagKey(name));
 
@@ -70,6 +77,7 @@ const handleSave = () => {
         type: barcodeType.value,
         value: barcodeValue.value,
         tags: [...selectedTags.value],
+        note: barcodeNote.value,
     });
 };
 
@@ -138,6 +146,22 @@ const close = () => {
                         <small v-if="validationError"
                                class="text-xs text-red-500">{{
                                    validationError
+                               }}</small>
+                    </div>
+
+                    <div class="flex flex-col gap-1">
+                        <label for="modal-note"
+                               class="text-sm font-medium text-slate-700">Note</label>
+                        <input id="modal-note"
+                               v-model="barcodeNote"
+                               type="text"
+                               :maxlength="NOTE_MAX_LENGTH"
+                               class="w-full px-3 py-2.5 border border-slate-300 rounded bg-white text-slate-800 text-sm leading-snug focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               :class="{ 'border-red-400 focus:ring-red-400': noteError }"
+                               @keyup.enter="handleSave"/>
+                        <small v-if="noteError"
+                               class="text-xs text-red-500">{{
+                                   noteError
                                }}</small>
                     </div>
                 </div>

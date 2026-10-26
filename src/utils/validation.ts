@@ -23,6 +23,22 @@ export const getTagNameError = (name: string): string => {
     return '';
 };
 
+export const NOTE_MAX_LENGTH = 128;
+
+/**
+ * Validates a barcode note. Plain text only: no angle brackets, and at most NOTE_MAX_LENGTH characters.
+ * Returns an error message if invalid, or empty string if valid.
+ */
+export const getNoteError = (note: string): string => {
+    if (note.length > NOTE_MAX_LENGTH) {
+        return `Note must be ${NOTE_MAX_LENGTH} characters or fewer`;
+    }
+    if (/[<>]/.test(note)) {
+        return 'Note cannot contain < or > characters';
+    }
+    return '';
+};
+
 /**
  * Validates barcode input value based on selected barcode type.
  * Returns an error message if invalid, or empty string if valid.
@@ -39,7 +55,7 @@ export const getValidationError = (type: string, value: string): string => {
             }
             break;
         case 'code39':
-            if (!/^[A-Z0-9 \-.$/+%]+$/i.test(value)) {
+            if (!/^[A-Z0-9 \-.$/+%]+$/.test(value)) {
                 return 'Code 39 only supports A–Z, 0–9 and - . $ / + % SPACE';
             }
             break;

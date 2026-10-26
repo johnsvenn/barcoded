@@ -65,7 +65,7 @@ const openEditModal = (b: Barcode) => {
     showBarcodeModal.value = true;
 };
 
-const handleSaveBarcode = async (data: { type: string; value: string; tags: string[] }) => {
+const handleSaveBarcode = async (data: { type: string; value: string; tags: string[]; note: string }) => {
     const known = new Map(
         (await db.tags.toArray()).map((c) => [tagKey(c.name), c]),
     );
@@ -78,6 +78,7 @@ const handleSaveBarcode = async (data: { type: string; value: string; tags: stri
             type: data.type,
             value: data.value,
             tags: tagIds,
+            note: data.note,
         });
     } else {
         const b: Barcode = {
@@ -85,6 +86,7 @@ const handleSaveBarcode = async (data: { type: string; value: string; tags: stri
             type: data.type,
             value: data.value,
             tags: tagIds,
+            note: data.note,
             createdAt: Date.now(),
         };
         await db.barcodes.add(b);

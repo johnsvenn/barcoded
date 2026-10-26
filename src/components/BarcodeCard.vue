@@ -71,11 +71,16 @@ watch(
              aria-label="View barcode"
              @click="emit('scan', barcode)"
              @keydown.enter.space.prevent="emit('scan', barcode)">
-            <div class="text-center">
-                <div class="font-semibold text-sm break-all text-slate-800 leading-snug">
+            <div>
+                <div class="font-semibold text-sm break-all text-slate-800 leading-snug text-center">
                     {{ barcode.value }}
                 </div>
-                <div class="text-xs text-slate-500 mt-0.5">{{ typeLabel }}</div>
+                <div class="flex justify-between items-center gap-2 mt-0.5 text-xs text-slate-500">
+                    <span class="shrink-0">{{ typeLabel }}</span>
+                    <span v-if="barcode.note"
+                          class="min-w-0 truncate"
+                          :title="barcode.note">{{ barcode.note }}</span>
+                </div>
             </div>
 
             <div class="flex justify-center items-center p-3 X-bg-slate-50 X-border border-slate-200 rounded transition-opacity">

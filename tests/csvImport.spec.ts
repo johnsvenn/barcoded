@@ -50,7 +50,7 @@ describe('csvImport utility', () => {
             expect(result.errors).toEqual([]);
             expect(result.skippedDuplicatesCount).toBe(0);
             expect(result.validRowsToImport).toEqual([
-                { type: 'qrcode', value: '123', tagNames: [] },
+                { type: 'qrcode', value: '123', tagNames: [], note: '' },
             ]);
         });
 
@@ -92,7 +92,7 @@ describe('csvImport utility', () => {
 
             expect(result.skippedDuplicatesCount).toBe(0);
             expect(result.validRowsToImport).toEqual([
-                { type: 'qrcode', value: 'existing-123', tagNames: ['Work', 'Home'] },
+                { type: 'qrcode', value: 'existing-123', tagNames: ['Work', 'Home'], note: '' },
             ]);
         });
 
@@ -129,7 +129,7 @@ describe('csvImport utility', () => {
 
             expect(result.errors).toEqual([]);
             expect(result.validRowsToImport).toEqual([
-                { type: 'qrcode', value: '999', tagNames: ['Work'] },
+                { type: 'qrcode', value: '999', tagNames: ['Work'], note: '' },
             ]);
         });
 
@@ -148,8 +148,44 @@ describe('csvImport utility', () => {
 
             expect(result.errors).toEqual([]);
             expect(result.validRowsToImport).toEqual([
-                { type: 'qrcode', value: '999', tagNames: ['Shopping', 'Work'] },
+                { type: 'qrcode', value: '999', tagNames: ['Shopping', 'Work'], note: '' },
             ]);
+        });
+    });
+
+    describe('note column', () => {
+        it('reads the note from a notes header column', () => {
+            const csv = 'type,value,notes\nqrcode,ABC,Spare key';
+            const result = validateAndParseImport(csv, [], []);
+
+            expect(result.errors).toEqual([]);
+            expect(result.validRowsToImport[0]?.note).toBe('Spare key');
+        });
+
+        it('rejects a note over 128 characters', () => {
+            const csv = `type,value,note\nqrcode,ABC,${'a'.repeat(129)}`;
+            const result = validateAndParseImport(csv, [], []);
+
+            expect(result.errors).toEqual(['Row 2: Note must be 128 characters or fewer']);
+            expect(result.validRowsToImport).toEqual([]);
+        });
+
+        it('rejects a note containing angle brackets', () => {
+            const csv = 'type,value,note\nqrcode,ABC,<b>hi</b>';
+            const result = validateAndParseImport(csv, [], []);
+
+            expect(result.errors).toEqual(['Row 2: Note cannot contain < or > characters']);
+        });
+
+        it('keeps the existing note when a row duplicates a barcode with a different note', () => {
+            const existing: Barcode[] = [
+                { id: 'b1', type: 'qrcode', value: 'ABC', tags: [], note: 'Old', createdAt: 1 },
+            ];
+            const csv = 'type,value,note\nqrcode,ABC,New';
+            const result = validateAndParseImport(csv, existing, []);
+
+            expect(result.validRowsToImport).toEqual([]);
+            expect(result.skippedDuplicatesCount).toBe(1);
         });
     });
 
@@ -167,8 +203,8 @@ describe('csvImport utility', () => {
             await testDb.tags.add(initialTags[0]!);
 
             const rowsToImport = [
-                { type: 'qrcode', value: 'ABC', tagNames: ['Work'] },
-                { type: 'code39', value: 'XYZ', tagNames: ['New Tag'] },
+                { type: 'qrcode', value: 'ABC', tagNames: ['Work'], note: '' },
+                { type: 'code39', value: 'XYZ', tagNames: ['New Tag'], note: '' },
             ];
 
             const result = await executeImport(rowsToImport, initialTags);
@@ -186,7 +222,7 @@ describe('csvImport utility', () => {
 
         it('creates every tag in a multi-tag row and applies all of them', async () => {
             const result = await executeImport(
-                [{ type: 'qrcode', value: 'M1', tagNames: ['Shopping', 'Work'] }],
+                [{ type: 'qrcode', value: 'M1', tagNames: ['Shopping', 'Work'], note: '' }],
                 [],
             );
 
@@ -199,10 +235,20 @@ describe('csvImport utility', () => {
         });
 
         it('imports an untagged row with no tags', async () => {
-            await executeImport([{ type: 'qrcode', value: 'N1', tagNames: [] }], []);
+            await executeImport([{ type: 'qrcode', value: 'N1', tagNames: [], note: '' }], []);
 
             const barcode = (await testDb.barcodes.toArray())[0]!;
             expect(barcode.tags).toEqual([]);
+        });
+
+        it('saves the note on the imported barcode', async () => {
+            await executeImport(
+                [{ type: 'qrcode', value: 'NT1', tagNames: [], note: 'Loyalty card' }],
+                [],
+            );
+
+            const barcode = (await testDb.barcodes.toArray())[0]!;
+            expect(barcode.note).toBe('Loyalty card');
         });
 
         it('reuses an existing tag when names differ only by case', async () => {
@@ -210,7 +256,7 @@ describe('csvImport utility', () => {
             await testDb.tags.add(existing[0]!);
 
             const result = await executeImport(
-                [{ type: 'qrcode', value: 'W1', tagNames: ['WORK'] }],
+                [{ type: 'qrcode', value: 'W1', tagNames: ['WORK'], note: '' }],
                 existing,
             );
 
@@ -226,14 +272,24 @@ describe('csvImport utility', () => {
             { id: 't2', name: 'work' },
         ];
 
-        it('writes a type,value,tags header and one row per barcode', () => {
+        it('writes a type,value,tags,note header and one row per barcode', () => {
             const barcodes: Barcode[] = [
                 { id: 'b1', type: 'qrcode', value: '123', tags: ['t1', 't2'], createdAt: 1 },
                 { id: 'b2', type: 'ean13', value: '4006381333931', tags: [], createdAt: 2 },
             ];
 
             expect(buildExportCsv(barcodes, tags)).toBe(
-                'type,value,tags\nqrcode,123,shopping;work\nean13,4006381333931,',
+                'type,value,tags,note\nqrcode,123,shopping;work,\nean13,4006381333931,,',
+            );
+        });
+
+        it('writes the note column', () => {
+            const barcodes: Barcode[] = [
+                { id: 'b1', type: 'qrcode', value: '123', tags: [], note: 'Gym, front desk', createdAt: 1 },
+            ];
+
+            expect(buildExportCsv(barcodes, tags)).toBe(
+                'type,value,tags,note\nqrcode,123,,"Gym, front desk"',
             );
         });
 
@@ -242,12 +298,12 @@ describe('csvImport utility', () => {
                 { id: 'b1', type: 'qrcode', value: 'a,"b"', tags: [], createdAt: 1 },
             ];
 
-            expect(buildExportCsv(barcodes, tags)).toBe('type,value,tags\nqrcode,"a,""b""",');
+            expect(buildExportCsv(barcodes, tags)).toBe('type,value,tags,note\nqrcode,"a,""b""",,');
         });
 
         it('round-trips through validateAndParseImport', () => {
             const barcodes: Barcode[] = [
-                { id: 'b1', type: 'qrcode', value: 'a,"b"', tags: ['t1'], createdAt: 1 },
+                { id: 'b1', type: 'qrcode', value: 'a,"b"', tags: ['t1'], note: 'Back, door', createdAt: 1 },
                 { id: 'b2', type: 'code128', value: 'ABC-1', tags: ['t1', 't2'], createdAt: 2 },
                 { id: 'b3', type: 'qrcode', value: 'plain', tags: [], createdAt: 3 },
             ];
@@ -256,9 +312,9 @@ describe('csvImport utility', () => {
 
             expect(result.errors).toEqual([]);
             expect(result.validRowsToImport).toEqual([
-                { type: 'qrcode', value: 'a,"b"', tagNames: ['shopping'] },
-                { type: 'code128', value: 'ABC-1', tagNames: ['shopping', 'work'] },
-                { type: 'qrcode', value: 'plain', tagNames: [] },
+                { type: 'qrcode', value: 'a,"b"', tagNames: ['shopping'], note: 'Back, door' },
+                { type: 'code128', value: 'ABC-1', tagNames: ['shopping', 'work'], note: '' },
+                { type: 'qrcode', value: 'plain', tagNames: [], note: '' },
             ]);
         });
     });

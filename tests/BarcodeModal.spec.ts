@@ -129,7 +129,7 @@ describe('BarcodeModal.vue', () => {
     await clickButtonWithText('Create');
 
     expect(chipNames()).toEqual(['Shopping', 'Errands']);
-    expect(savedPayload(wrapper)).toEqual({ type: 'qrcode', value: 'HELLO', tags: ['Shopping', 'Errands'] });
+    expect(savedPayload(wrapper)).toEqual({ type: 'qrcode', value: 'HELLO', tags: ['Shopping', 'Errands'], note: '' });
   });
 
   it('matches an existing tag case-insensitively instead of creating a duplicate', async () => {

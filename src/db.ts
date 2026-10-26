@@ -10,6 +10,7 @@ export interface Barcode {
     type: string
     value: string
     tags: string[]
+    note?: string
     createdAt: number
 }
 

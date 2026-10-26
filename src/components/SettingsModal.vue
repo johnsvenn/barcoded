@@ -170,7 +170,7 @@ const exportBarcodes = async () => {
                         <p class="text-xs text-slate-500">
                             Upload a CSV file containing barcode data. Required fields:
                             <span class="font-semibold text-slate-700">Code Type</span> (e.g. qrcode, code39, ean13) and
-                            <span class="font-semibold text-slate-700">Value</span>. Tag is optional; separate several with semicolons (e.g. Shopping;Work). Tags may only contain letters a–z, numbers 0–9 and spaces.
+                            <span class="font-semibold text-slate-700">Value</span>. Tag is optional; separate several with semicolons (e.g. Shopping;Work). Tags may only contain letters a–z, numbers 0–9 and spaces. Note is optional, up to 128 characters, and cannot contain &lt; or &gt;.
                         </p>
                     </div>
 

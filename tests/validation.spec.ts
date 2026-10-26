@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getTagNameError, getValidationError, validateEan13CheckDigit } from '../src/utils/validation';
+import { getNoteError, getTagNameError, getValidationError, validateEan13CheckDigit } from '../src/utils/validation';
 
 describe('Validation Utilities', () => {
     describe('validateEan13CheckDigit', () => {
@@ -47,6 +47,12 @@ describe('Validation Utilities', () => {
                 'Code 39 only supports A–Z, 0–9 and - . $ / + % SPACE'
             );
         });
+
+        it('rejects lowercase letters for Code 39, which the renderer cannot draw', () => {
+            expect(getValidationError('code39', 'abc')).toBe(
+                'Code 39 only supports A–Z, 0–9 and - . $ / + % SPACE'
+            );
+        });
     });
 
     describe('getTagNameError', () => {
@@ -63,6 +69,26 @@ describe('Validation Utilities', () => {
 
         it('requires a name', () => {
             expect(getTagNameError('')).toBe('Name is required');
+        });
+    });
+
+    describe('getNoteError', () => {
+        it('accepts an empty note and plain text', () => {
+            expect(getNoteError('')).toBe('');
+            expect(getNoteError('Back door, *key* & more')).toBe('');
+        });
+
+        it('accepts a note of exactly 128 characters', () => {
+            expect(getNoteError('a'.repeat(128))).toBe('');
+        });
+
+        it('rejects a note over 128 characters', () => {
+            expect(getNoteError('a'.repeat(129))).toBe('Note must be 128 characters or fewer');
+        });
+
+        it('rejects angle brackets', () => {
+            expect(getNoteError('<script>')).toBe('Note cannot contain < or > characters');
+            expect(getNoteError('a > b')).toBe('Note cannot contain < or > characters');
         });
     });
 });

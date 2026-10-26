@@ -1,5 +1,5 @@
 import { type Barcode, db, type Tag } from '../db';
-import { getTagNameError, getValidationError } from './validation';
+import { getNoteError, getTagNameError, getValidationError } from './validation';
 import { normaliseTagName, resolveTagIds, tagKey } from './tags';
 import { KNOWN_BARCODE_TYPE_VALUES } from '../constants/barcodeTypes';
 import { v4 as uuidv4 } from 'uuid';
@@ -9,6 +9,7 @@ export interface ParsedCsvRow {
     type: string
     value: string
     tagNames: string[]
+    note: string
 }
 
 export interface ImportValidationResult {
@@ -17,6 +18,7 @@ export interface ImportValidationResult {
         type: string
         value: string
         tagNames: string[]
+        note: string
     }>
     skippedDuplicatesCount: number
 }
@@ -108,6 +110,7 @@ export const validateAndParseImport = (
     let typeCol = -1;
     let valueCol = -1;
     let tagCol = -1;
+    let noteCol = -1;
     let hasHeader = false;
 
     const hasTypeHeader = lowerFirstLine.some((f) => ['type', 'bcid', 'format', 'kind'].includes(f));
@@ -120,6 +123,7 @@ export const validateAndParseImport = (
         tagCol = lowerFirstLine.findIndex((f) =>
             ['tag', 'tags', 'category', 'cat', 'group'].includes(f),
         );
+        noteCol = lowerFirstLine.findIndex((f) => ['note', 'notes'].includes(f));
     }
 
     const dataLines = hasHeader ? parsedLines.slice(1) : parsedLines;
@@ -141,11 +145,13 @@ export const validateAndParseImport = (
         let type = '';
         let value = '';
         let tag = '';
+        let note = '';
 
         if (hasHeader) {
             type = typeCol >= 0 && fields[typeCol] !== undefined ? fields[typeCol]! : '';
             value = valueCol >= 0 && fields[valueCol] !== undefined ? fields[valueCol]! : '';
             tag = tagCol >= 0 && fields[tagCol] !== undefined ? fields[tagCol]! : '';
+            note = noteCol >= 0 && fields[noteCol] !== undefined ? fields[noteCol]! : '';
         } else {
             // Positional detection logic
             if (fields.length >= 3) {
@@ -207,11 +213,17 @@ export const validateAndParseImport = (
             }
         }
 
+        const noteError = getNoteError(note);
+        if (noteError) {
+            errors.push(`Row ${lineNumber}: ${noteError}`);
+        }
+
         parsedRows.push({
             lineNumber,
             type,
             value,
             tagNames,
+            note,
         });
     }
 
@@ -237,7 +249,7 @@ export const validateAndParseImport = (
         seenKeys.add(key);
     }
 
-    const validRowsToImport: Array<{ type: string; value: string; tagNames: string[] }> = [];
+    const validRowsToImport: Array<{ type: string; value: string; tagNames: string[]; note: string }> = [];
     let skippedDuplicatesCount = 0;
 
     for (const row of parsedRows) {
@@ -250,6 +262,7 @@ export const validateAndParseImport = (
                 type: row.type,
                 value: row.value,
                 tagNames: row.tagNames,
+                note: row.note,
             });
         }
     }
@@ -265,7 +278,7 @@ export const validateAndParseImport = (
  * Inserts valid barcode rows and auto-created tags into IndexedDB.
  */
 export const executeImport = async (
-    validRows: Array<{ type: string; value: string; tagNames: string[] }>,
+    validRows: Array<{ type: string; value: string; tagNames: string[]; note: string }>,
     existingTags: Tag[],
 ): Promise<{ importedCount: number; newTagsCount: number }> => {
     if (validRows.length === 0) {
@@ -283,6 +296,7 @@ export const executeImport = async (
         type: row.type,
         value: row.value,
         tags: resolveTagIds(row.tagNames, known, created),
+        note: row.note,
         createdAt: Date.now(),
     }));
 
@@ -308,7 +322,7 @@ const escapeCsvField = (field: string): string =>
 
 /**
  * Serialises barcodes to CSV in the format validateAndParseImport reads back:
- * a `type,value,tags` header, with tags joined by semicolons.
+ * a `type,value,tags,note` header, with tags joined by semicolons.
  */
 export const buildExportCsv = (barcodes: Barcode[], tags: Tag[]): string => {
     const tagNameById = new Map<string, string>();
@@ -318,8 +332,8 @@ export const buildExportCsv = (barcodes: Barcode[], tags: Tag[]): string => {
 
     const rows = barcodes.map((b) => {
         const tagNames = b.tags.map((id) => tagNameById.get(id)).filter((n): n is string => !!n);
-        return [b.type, b.value, tagNames.join(';')].map(escapeCsvField).join(',');
+        return [b.type, b.value, tagNames.join(';'), b.note ?? ''].map(escapeCsvField).join(',');
     });
 
-    return ['type,value,tags', ...rows].join('\n');
+    return ['type,value,tags,note', ...rows].join('\n');
 };
