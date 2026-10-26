@@ -126,11 +126,11 @@ onMounted(loadData);
         <template #actions>
             <button ref="openCreateModalButton"
                     type="button"
-                    class="btn-primary__button btn-round btn-round--lg"
+                    class="btn-primary__button btn-round btn-round--sm"
                     aria-label="New barcode"
                     title="New Barcode"
                     @click="openCreateModal">
-                <PlusIcon class="w-10 h-10" />
+                <PlusIcon class="w-6 h-6" />
             </button>
             <button ref="showTagModalButton"
                     type="button"
