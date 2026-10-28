@@ -1,6 +1,6 @@
 {
-  "name": "app-barcode",
-  "version": "1.0.0",
+  "name": "barcoded",
+  "version": "1.0.1",
   "private": true,
   "type": "module",
   "scripts": {
