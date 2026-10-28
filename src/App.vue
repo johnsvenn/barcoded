@@ -1,13 +1,15 @@
 <script setup lang="ts">
-import { AdjustmentsHorizontalIcon, PlusIcon, TagIcon } from '@heroicons/vue/24/outline';
+import { AdjustmentsHorizontalIcon, ComputerDesktopIcon, PlusIcon, TagIcon } from '@heroicons/vue/24/outline';
 import { type Barcode, db, type Tag } from './db';
 import { BARCODE_TYPES, getDefaultBarcodeType } from './constants/barcodeTypes';
+import { canInstallPwa, promptPwaInstall } from './utils/pwaInstall';
 import { computed, onMounted, ref } from 'vue';
 import { deleteTag, resolveTagIds, tagKey } from './utils/tags';
 import AppLayout from './components/AppLayout.vue';
 import BarcodeGrid from './components/BarcodeGrid.vue';
 import BarcodeModal from './components/BarcodeModal.vue';
 import BarcodeScanModal from './components/BarcodeScanModal.vue';
+import PwaInstallModal from './components/PwaInstallModal.vue';
 import SettingsModal from './components/SettingsModal.vue';
 import TagModal from './components/TagModal.vue';
 import TagTabs from './components/TagTabs.vue';
@@ -27,6 +29,7 @@ const showBarcodeModal = ref(false);
 const editingBarcode = ref<Barcode | null>(null);
 const showTagModal = ref(false);
 const showSettingsModal = ref(false);
+const showInstallModal = ref(false);
 
 // Scan modal state
 const showScanModal = ref(false);
@@ -120,12 +123,26 @@ const handleDeleteTag = async (tag: Tag) => {
     if (filterTag.value === tag.id) filterTag.value = 'all';
 };
 
+// ─── PWA install handlers ───────────────────────────────────────────────────
+const handleInstallApp = async () => {
+    showInstallModal.value = false;
+    await promptPwaInstall();
+};
+
 onMounted(loadData);
 </script>
 
 <template>
     <AppLayout title="Barcoded">
         <template #actions>
+            <button v-if="canInstallPwa"
+                    type="button"
+                    class="btn-secondary__button bg-amber-300 btn-round btn-round--sm install-pulse"
+                    aria-label="Install app"
+                    title="Install Barcoded as an application"
+                    @click="showInstallModal = true">
+                <ComputerDesktopIcon class="w-6 h-6" />
+            </button>
             <button ref="openCreateModalButton"
                     type="button"
                     class="btn-primary__button btn-round btn-round--sm"
@@ -190,5 +207,31 @@ onMounted(loadData);
         <SettingsModal v-model:visible="showSettingsModal"
                        @imported="loadData"
                        @default-type-saved="defaultBarcodeType = $event"/>
+
+        <!-- PWA Install Modal -->
+        <PwaInstallModal v-model:visible="showInstallModal"
+                         @install="handleInstallApp"/>
     </AppLayout>
 </template>
+
+<style scoped>
+/* Gentle attention pulse for the install button */
+@keyframes install-pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.12);
+    }
+}
+
+.install-pulse {
+    animation: install-pulse 2.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .install-pulse {
+        animation: none;
+    }
+}
+</style>
