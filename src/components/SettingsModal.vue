@@ -135,7 +135,7 @@ const exportBarcodes = async () => {
              class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs"
              @click.self="close"
              @keydown.esc="close">
-            <div class="bg-white rounded shadow-xl border border-slate-300 w-full max-w-lg overflow-hidden flex flex-col">
+            <div class="bg-white rounded shadow-xl border border-slate-300 w-full max-w-lg max-h-[calc(100vh-40px)] overflow-hidden flex flex-col">
                 <!-- Header -->
                 <div class="flex items-center justify-between px-5 py-3.5 border-b border-slate-200 bg-slate-50">
                     <h2 class="text-base font-semibold text-slate-800">Settings</h2>
@@ -148,7 +148,7 @@ const exportBarcodes = async () => {
                 </div>
 
                 <!-- Body -->
-                <div class="p-5 flex flex-col gap-5">
+                <div class="p-5 flex flex-col gap-5 flex-1 min-h-0 overflow-y-auto">
                     <div class="flex flex-col gap-2">
                         <h3 class="text-sm font-semibold text-slate-800">Default Barcode Type</h3>
                         <p class="text-xs text-slate-500">
