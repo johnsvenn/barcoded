@@ -193,7 +193,7 @@ const exportBarcodes = async () => {
                                 {{ selectedFile.name }} ({{ (selectedFile.size / 1024).toFixed(1) }} KB)
                             </p>
                         </div>
-                        <div>
+                        <div class="flex justify-between items-center gap-3">
                             <button type="button"
                                     class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed rounded transition-colors"
                                     :disabled="!selectedFile || isUploading"
@@ -201,6 +201,11 @@ const exportBarcodes = async () => {
                                 <ArrowUpTrayIcon class="w-4 h-4" />
                                 {{ isUploading ? 'Importing...' : 'Upload & Import' }}
                             </button>
+                            <a href="/barcode-import-template.csv"
+                               download="barcode-import-template.csv"
+                               class="text-sm text-slate-400 hover:text-slate-700 underline">
+                                Download template
+                            </a>
                         </div>
                     </div>
 
