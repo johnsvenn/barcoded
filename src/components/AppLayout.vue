@@ -10,7 +10,7 @@ defineProps<{
         <header class="header__bar">
             <div class="max-w-screen-xl mx-auto px-6 flex justify-between items-end">
                 <div>
-                    <h1 class="header__title py-2">{{ title }}</h1>
+                    <h1 class="header__title font-mono tracking-[4px] lowercase py-2">{{ title }}</h1>
                     <div v-if="$slots.tabs"
                          class="max-w-screen-xl pt-2">
                         <slot name="tabs"></slot>
